@@ -1,5 +1,5 @@
 streamlit==1.40.2
-crewAI==0.80.0
+crewAI
 pandas==2.1.4
 numpy==1.26.4
 mdpd==0.2.1
