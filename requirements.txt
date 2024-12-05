@@ -17,3 +17,4 @@ configparser
 tm1py==2.0.4
 python-dotenv==1.0.1
 chromadb<=0.5.3
+SQLAlchemy==1.4.0
