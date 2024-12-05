@@ -351,7 +351,7 @@ def run_crewai_app():
         pythonREPL = PythonREPLTool()
 
         # different file paths
-        file_path = "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/Agent/WatsonxCrewAI2/2024-Budget-Note de Cadrage.docx"
+        file_path = "2024-Budget-Note de Cadrage.docx"
         # csv_path = "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/Agent/WatsonxCrewAI2/00.Ventes - 01. Analyse Couts.csv"
         # CSVSearch = CSVSearchTool(csv=csv_path)
 
