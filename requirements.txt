@@ -12,7 +12,7 @@ langchain-core
 langchain-ibm
 ibm-watsonx-ai
 typing
-crewai-tools
+crewai-tools==0.14.0
 pydantic
 configparser
 tm1py
