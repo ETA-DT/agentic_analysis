@@ -1,4 +1,6 @@
 crewAI
+pandas
+numpy
 langchain_community
 langchain_ibm
 ibm-watsonx-ai
