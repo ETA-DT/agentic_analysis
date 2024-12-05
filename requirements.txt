@@ -1,7 +1,8 @@
+streamlit
+crewAI
 pandas
 numpy
 mdpd
-crewAI
 langchain_community
 duckduckgo-search
 langchain
@@ -13,7 +14,6 @@ typing
 crewai-tools
 pydantic
 configparser
-streamlit
 tm1py
 python-dotenv
 chromadb<=0.5.3
