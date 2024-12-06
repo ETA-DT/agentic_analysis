@@ -53,8 +53,8 @@ if uploaded_file:
       f.write(uploaded_file.getbuffer())         
     st.success("Saved File")
 
-st.header('Default Options')
-event = st_file_browser("example_artifacts", key='A')
+st.header('Directory')
+event = st_file_browser(os.path.join("tempDir",uploaded_file.name))
 st.write(event)
 
 load_dotenv()
