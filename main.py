@@ -46,7 +46,7 @@ from langchain_experimental.agents.agent_toolkits import create_csv_agent
 from dotenv import load_dotenv
 
 uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
-st.write(uploaded_file.name)
+st.success(uploaded_file.name)
 
 
 load_dotenv()
