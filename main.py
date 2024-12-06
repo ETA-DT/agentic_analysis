@@ -41,6 +41,7 @@ from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from ibm_watsonx_ai.foundation_models.utils.enums import DecodingMethods
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
+from streamlit_file_browser import st_file_browser
 
 # from crewai import LLM
 from dotenv import load_dotenv
@@ -49,8 +50,10 @@ uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
 if uploaded_file:
     st.success(uploaded_file.name)
     with open(os.path.join("tempDir",uploaded_file.name),"wb") as f: 
-      f.write(uploaded_file)         
+      f.write(uploaded_file.getbuffer())         
     st.success("Saved File")
+
+st.file_bro
 
 load_dotenv()
 
