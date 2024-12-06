@@ -54,7 +54,15 @@ if uploaded_file:
     st.success("Saved File")
 
 st.header('Directory')
-event = st_file_browser(os.path.join("tempDir",uploaded_file.name))
+event = st_file_browser(os.path.join("/workspaces/agentic_analysis/tempDir"),
+    key="deep",
+    use_static_file_server=True,
+    show_choose_file=True,
+    show_delete_file=True,
+    show_download_file=False,
+    show_new_folder=True,
+    show_upload_file=False,
+)
 st.write(event)
 
 load_dotenv()
