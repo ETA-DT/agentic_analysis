@@ -48,10 +48,9 @@ from dotenv import load_dotenv
 uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
 if uploaded_file:
     st.success(uploaded_file.name)
-    with open(uploaded_file.name, 'wb') as f:
-        f.write(uploaded_file)
-        st.success(f'file saved {uploaded_file.name}')
-
+    with open(os.path.join("tempDir",uploaded_file.name),"wb") as f: 
+      f.write(uploaded_file.getbuffer())         
+    st.success("Saved File")
 
 load_dotenv()
 
