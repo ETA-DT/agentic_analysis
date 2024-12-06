@@ -53,7 +53,9 @@ if uploaded_file:
       f.write(uploaded_file.getbuffer())         
     st.success("Saved File")
 
-st.file_bro
+st.header('Default Options')
+event = st_file_browser("example_artifacts", key='A')
+st.write(event)
 
 load_dotenv()
 
