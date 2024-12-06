@@ -45,7 +45,10 @@ from langchain_experimental.agents.agent_toolkits import create_csv_agent
 # from crewai import LLM
 from dotenv import load_dotenv
 
-st.write('Hello world!')
+uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
+st.write(uploaded_file.name)
+
+
 load_dotenv()
 
 WATSONX_APIKEY = os.getenv("WATSONX_APIKEY", "")
