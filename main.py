@@ -55,7 +55,7 @@ with st.sidebar:
             st.success("Saved File")
     
     st.sidebar.header('Directory')
-    event = st_file_browser(os.path.join("/workspaces/agentic_analysis/Documents RAG"),
+    event = st_file_browser(os.path.join("Documents RAG"),
     key="deep",
     use_static_file_server=True,
     show_choose_file=True,
