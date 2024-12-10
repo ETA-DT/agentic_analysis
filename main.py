@@ -92,14 +92,14 @@ embeddings = WatsonxEmbeddings(
 def create_vectorstore(path):
     texts = create_documents(path)
     return Chroma.from_documents(texts, embeddings)
+    
+file_path = "Documents RAG/Note de Cadrage - Europe de l'Ouest.docx"
+docsearch = create_vectorstore(file_path)
 
 def add_documents(vectorbase, path):
     new_documents = create_documents(path)
     vectorbase.add_documents(new_documents)
     
-file_path = "Documents RAG/Note de Cadrage - Europe de l'Ouest.docx"
-docsearch = create_vectorstore(file_path)
-
 with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
     if uploaded_file:
