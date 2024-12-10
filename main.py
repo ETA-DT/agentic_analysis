@@ -50,12 +50,12 @@ with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
     if uploaded_file:
         st.success(uploaded_file.name)
-        with open(os.path.join("tempDir",uploaded_file.name),"wb") as f: 
+        with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
             f.write(uploaded_file.getbuffer())         
             st.success("Saved File")
     
     st.sidebar.header('Directory')
-    event = st_file_browser(os.path.join("/workspaces/agentic_analysis/tempDir"),
+    event = st_file_browser(os.path.join("/workspaces/agentic_analysis/Documents RAG"),
     key="deep",
     use_static_file_server=True,
     show_choose_file=True,
@@ -482,7 +482,7 @@ def run_crewai_app():
         # Define Senior Data Analyst Agent
         senior_data_analyst = Agent(
             role="Senior Data Analyst",
-            goal=f"Analyze the dataframe and provide clear, actionable key points. {dataframe_enriched_prompt_input(cube_name=cube_name, view_name=view_name)}",
+            goal=f"Analyze the dataframe and provide clear, actionable key points.",
             backstory="""You are a senior data analyst with a strong background 
                             in applied mathematics and computer science, skilled in deriving insights 
                             from complex datasets.""",
@@ -533,7 +533,7 @@ def run_crewai_app():
 
         # Define Task 1: Data Analysis
         task1 = Task(
-            description="Analyze the provided dataframe. Identify trends, anomalies, and key statistics. Provide actionable insights and key points for decision-makers.",
+            description="Analyze the provided dataframe.  {dataframe_enriched_prompt_input(cube_name=cube_name, view_name=view_name)}. Identify trends, anomalies, and key statistics. Provide actionable insights and key points for decision-makers.",
             expected_output="Analysis of the dataframe with key points, trends, and actionable insights.",
             agent=senior_data_analyst,
         )
