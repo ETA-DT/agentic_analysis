@@ -114,7 +114,7 @@ BRANCH_NAME = "main"  # Or the branch you want to push to
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
 
 # Streamlit file uploader
-uploaded_file = st.file_uploader("Upload a file to GitHub", type=["txt", "csv", "png", "jpg", "pdf"])
+uploaded_file = st.file_uploader("Upload a file to GitHub", type=["txt", "csv", "png", "jpg", "pdf",".docx"])
 
 if uploaded_file is not None:
     file_content = uploaded_file.getvalue()
