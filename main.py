@@ -100,49 +100,49 @@ def add_documents(vectorbase, path):
     new_documents = create_documents(path)
     vectorbase.add_documents(new_documents)
 
-import streamlit as st
-import requests
-import base64
+# import streamlit as st
+# import requests
+# import base64
 
-# GitHub configuration
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Store securely, e.g., in environment variables
-GITHUB_USERNAME = "ETA-DT"
-REPO_NAME = "agentic_analysis"
-BRANCH_NAME = "main"  # Or the branch you want to push to
+# # GitHub configuration
+# GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Store securely, e.g., in environment variables
+# GITHUB_USERNAME = "ETA-DT"
+# REPO_NAME = "agentic_analysis"
+# BRANCH_NAME = "main"  # Or the branch you want to push to
 
-# GitHub API URL template
-GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
+# # GitHub API URL template
+# GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
 
-# Streamlit file uploader
-uploaded_file = st.file_uploader("Upload a file to GitHub", type=["txt", "csv", "png", "jpg", "pdf","docx"])
+# # Streamlit file uploader
+# uploaded_file = st.file_uploader("Upload a file to GitHub", type=["txt", "csv", "png", "jpg", "pdf","docx"])
 
-if uploaded_file is not None:
-    file_content = uploaded_file.getvalue()
-    file_name = uploaded_file.name
+# if uploaded_file is not None:
+#     file_content = uploaded_file.getvalue()
+#     file_name = uploaded_file.name
 
-    # Encode the file content to base64 (required by GitHub API)
-    encoded_content = base64.b64encode(file_content).decode("utf-8")
+#     # Encode the file content to base64 (required by GitHub API)
+#     encoded_content = base64.b64encode(file_content).decode("utf-8")
 
-    # API payload
-    payload = {
-        "message": f"Add {file_name}",
-        "content": encoded_content,
-        "branch": BRANCH_NAME
-    }
+#     # API payload
+#     payload = {
+#         "message": f"Add {file_name}",
+#         "content": encoded_content,
+#         "branch": BRANCH_NAME
+#     }
 
-    # Make the API request
-    upload_url = f"{GITHUB_API_URL}/{file_name}"  # File will be saved at the root of the repository
-    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+#     # Make the API request
+#     upload_url = f"{GITHUB_API_URL}/{file_name}"  # File will be saved at the root of the repository
+#     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
 
-    response = requests.put(upload_url, headers=headers, json=payload)
+#     response = requests.put(upload_url, headers=headers, json=payload)
 
-    # Handle the API response
-    if response.status_code == 201:
-        st.success(f"File '{file_name}' successfully uploaded to GitHub!")
-    elif response.status_code == 422:  # Unprocessable Entity, file may already exist
-        st.error(f"File '{file_name}' already exists in the repository.")
-    else:
-        st.error(f"An error occurred: {response.json()}")
+#     # Handle the API response
+#     if response.status_code == 201:
+#         st.success(f"File '{file_name}' successfully uploaded to GitHub!")
+#     elif response.status_code == 422:  # Unprocessable Entity, file may already exist
+#         st.error(f"File '{file_name}' already exists in the repository.")
+#     else:
+#         st.error(f"An error occurred: {response.json()}")
 
 
 with st.sidebar:
