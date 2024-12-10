@@ -561,7 +561,7 @@ def run_crewai_app():
             agent=internal_document_researcher,
         )
 
-        task_values.append(task1,task4,task2)
+        task_values.append([task1,task4,task2])
         
         # Create and Run the Crew
         product_crew = Crew(
