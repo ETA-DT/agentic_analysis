@@ -66,6 +66,39 @@ def get_credentials():
         "apikey": os.getenv("WATSONX_APIKEY", ""),
     }
 
+def create_documents(path):
+    # # Loading files
+    loader = Docx2txtLoader(path)
+    # # Split documents into chunks
+    pages = loader.load_and_split()
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    texts = text_splitter.split_documents(pages)
+    return texts
+
+# embedding
+embed_params = {
+    EmbedParams.TRUNCATE_INPUT_TOKENS: 512,
+    EmbedParams.RETURN_OPTIONS: {"input_text": True},
+}
+
+embeddings = WatsonxEmbeddings(
+    model_id="intfloat/multilingual-e5-large",
+    url=get_credentials()["url"],
+    apikey=get_credentials()["apikey"],
+    project_id=WATSONX_PROJECT_ID,
+    params=embed_params,
+)
+
+def create_vectorstore(path):
+    texts = create_documents(path)
+    return Chroma.from_documents(texts, embeddings)
+
+def add_documents(vectorbase, path):
+    new_documents = create_documents(path)
+    vectorbase.add_documents(new_documents)
+    
+file_path = "Documents RAG/Note de Cadrage - Europe de l'Ouest.docx"
+docsearch = create_vectorstore(file_path)
 
 with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
@@ -85,40 +118,6 @@ with st.sidebar:
     show_new_folder=True,
     show_upload_file=False,
     )
-    
-    def create_documents(path):
-        # # Loading files
-        loader = Docx2txtLoader(path)
-        # # Split documents into chunks
-        pages = loader.load_and_split()
-        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        texts = text_splitter.split_documents(pages)
-        return texts
-
-    # embedding
-    embed_params = {
-        EmbedParams.TRUNCATE_INPUT_TOKENS: 512,
-        EmbedParams.RETURN_OPTIONS: {"input_text": True},
-    }
-
-    embeddings = WatsonxEmbeddings(
-        model_id="intfloat/multilingual-e5-large",
-        url=get_credentials()["url"],
-        apikey=get_credentials()["apikey"],
-        project_id=WATSONX_PROJECT_ID,
-        params=embed_params,
-    )
-
-    def create_vectorstore(path):
-        texts = create_documents(path)
-        return Chroma.from_documents(texts, embeddings)
-
-    def add_documents(vectorbase, path):
-        new_documents = create_documents(path)
-        vectorbase.add_documents(new_documents)
-        
-    file_path = "Documents RAG/Note de Cadrage - Europe de l'Ouest.docx"
-    docsearch = create_vectorstore(file_path)
     
     for filename in os.listdir("Documents RAG"):
         add_documents(
