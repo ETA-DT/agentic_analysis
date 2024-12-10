@@ -402,19 +402,19 @@ def run_crewai_app():
         pythonREPL = PythonREPLTool()
         duckduckgo_search = DuckDuckGoSearchRun()
 
-        file_path = "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/Agent/WatsonxCrewAI3/Note de Cadrage - Europe de l'Ouest.docx"
+        file_path = "Documents RAG/Note de Cadrage - Europe de l'Ouest.docx"
         docsearch = create_vectorstore(file_path)
         add_documents(
             docsearch,
-            "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/Agent/WatsonxCrewAI3/Note de Cadrage - Europe du Sud.docx",
+            "Documents RAG/Note de Cadrage - Europe du Sud.docx",
         )
         add_documents(
             docsearch,
-            "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/Agent/WatsonxCrewAI3/Note de Cadrage - Royaume-Uni.docx",
+            "Documents RAG/Note de Cadrage - Royaume-Uni.docx",
         )
         add_documents(
             docsearch,
-            "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/Agent/WatsonxCrewAI3/Note de Cadrage - Scandinavie.docx",
+            "Documents RAG/Note de Cadrage - Scandinavie.docx",
         )
 
         @tool
