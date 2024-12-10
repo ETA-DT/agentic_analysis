@@ -109,15 +109,15 @@ with st.sidebar:
             st.success("Saved File")
     
     st.sidebar.header('Directory')
-    event = st_file_browser(os.path.join("Documents RAG"),
-    key="deep",
-    use_static_file_server=True,
-    show_choose_file=True,
-    show_delete_file=True,
-    show_download_file=False,
-    show_new_folder=True,
-    show_upload_file=False,
-    )
+    # event = st_file_browser(os.path.join("Documents RAG"),
+    # key="deep",
+    # use_static_file_server=True,
+    # show_choose_file=True,
+    # show_delete_file=True,
+    # show_download_file=False,
+    # show_new_folder=True,
+    # show_upload_file=False,
+    # )
     
     for filename in os.listdir("Documents RAG"):
         add_documents(
