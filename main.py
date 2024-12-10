@@ -395,7 +395,7 @@ def run_crewai_app():
         }
 
         embeddings = WatsonxEmbeddings(
-            model_id=EmbeddingTypes.IBM_SLATE_125M_ENG.value,
+            model_id="intfloat/multilingual-e5-large",
             url=get_credentials()["url"],
             apikey=get_credentials()["apikey"],
             project_id=WATSONX_PROJECT_ID,
