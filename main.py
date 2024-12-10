@@ -99,7 +99,7 @@ docsearch = create_vectorstore(file_path)
 def add_documents(vectorbase, path):
     new_documents = create_documents(path)
     vectorbase.add_documents(new_documents)
-    
+
 with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
     if uploaded_file:
@@ -122,7 +122,7 @@ with st.sidebar:
     for filename in os.listdir("Documents RAG"):
         add_documents(
             docsearch,
-            filename,
+            os.path.join("Documents RAG" + filename),
         )
         st.write(filename)
 
