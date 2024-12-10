@@ -304,7 +304,7 @@ def run_crewai_app():
         rename_period_alias(df)
         for col in df.columns[-12:]:
             df[col] = df[col].apply(round_2)
-        df = df.set_index(df.columns[0])
+        # df = df.set_index(df.columns[0])
         return df
 
     def dimension_of_element(cube_name, view_name, element):
