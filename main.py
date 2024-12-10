@@ -244,6 +244,12 @@ class StreamToExpander:
 
 # Streamlit interface
 def run_crewai_app():
+    # Using object notation
+    add_selectbox = st.sidebar.selectbox(
+        "How would you like to be contacted?",
+        ("Email", "Home phone", "Mobile phone")
+    )
+    
     st.title("Watsonx AI Agent for dataframe analysis")
     cube_name = ""
     view_name = ""
