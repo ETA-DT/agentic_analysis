@@ -265,7 +265,7 @@ def run_crewai_app():
             )
             if not view_name:
                 st.stop()
-
+        
         # dimensions de la vue
         measure_dim = tm1.cubes.get_measure_dimension(cube_name=cube_name)
         country_dim = "Pays"
@@ -357,6 +357,8 @@ def run_crewai_app():
             )
         )
 
+    current_dataframe = view_dataframe(cube_name, view_name)
+    st.dataframe(current_dataframe)
     def dataframe_prompt_input(cube_name, view_name):
         dataframe = view_dataframe(cube_name, view_name)
         dataframe_md = dataframe.to_markdown()
@@ -398,7 +400,6 @@ def run_crewai_app():
         vectorbase.add_documents(new_documents)
 
     def create_crewai_setup(cube_name, view_name):
-
         ### RAG Setup
 
         pythonREPL = PythonREPLTool()
@@ -454,9 +455,7 @@ def run_crewai_app():
             ) in unique_retrieval:  # concatenate documents into a single str paragraph
                 retrieved_context += chunk + "\n"
             return retrieved_context
-
-        current_dataframe = view_dataframe(cube_name, view_name)
-
+            
         @tool
         def dataframe_creator(query: str, df=current_dataframe) -> str:
             """
@@ -558,6 +557,9 @@ def run_crewai_app():
             expected_output="Insights and goals from internal documents relevant to strategic planning.",
             agent=internal_document_researcher,
         )
+
+        task_values.append(task1,task4,task2)
+        
         # Create and Run the Crew
         product_crew = Crew(
             agents=[
@@ -583,7 +585,7 @@ def run_crewai_app():
         st.text(
             f"""
         Role = Senior Data Analyst
-        Goal = Analyze the dataframe and provide clear, actionable key points. {dataframe_enriched_prompt_input(cube_name=cube_name, view_name=view_name)}
+        Goal = Analyze the dataframe and provide clear, actionable key points.
         Backstory = You are a senior data analyst with a strong background 
                     in applied mathematics and computer science, skilled in deriving insights 
                     from complex datasets.
@@ -631,7 +633,7 @@ def run_crewai_app():
         end_time = time.time()
         total_time = end_time - start_time
         stopwatch_placeholder.text(f"Total Time Elapsed: {total_time:.2f} seconds")
-
+        
         st.header("Tasks:")
         st.table({"Tasks": task_values})
 
