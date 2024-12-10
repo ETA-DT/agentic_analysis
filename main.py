@@ -46,26 +46,6 @@ from streamlit_file_browser import st_file_browser
 # from crewai import LLM
 from dotenv import load_dotenv
 
-with st.sidebar:
-    uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
-    if uploaded_file:
-        st.success(uploaded_file.name)
-        with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
-            f.write(uploaded_file.getbuffer())         
-            st.success("Saved File")
-    
-    st.sidebar.header('Directory')
-    event = st_file_browser(os.path.join("Documents RAG"),
-    key="deep",
-    use_static_file_server=True,
-    show_choose_file=True,
-    show_delete_file=True,
-    show_download_file=False,
-    show_new_folder=True,
-    show_upload_file=False,
-    )
-    st.write(event)
-
 load_dotenv()
 
 WATSONX_APIKEY = os.getenv("WATSONX_APIKEY", "")
@@ -85,6 +65,70 @@ def get_credentials():
         "url": "https://us-south.ml.cloud.ibm.com",
         "apikey": os.getenv("WATSONX_APIKEY", ""),
     }
+
+
+with st.sidebar:
+    uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
+    if uploaded_file:
+        st.success(uploaded_file.name)
+        with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
+            f.write(uploaded_file.getbuffer())         
+            st.success("Saved File")
+    
+    st.sidebar.header('Directory')
+    event = st_file_browser(os.path.join("Documents RAG"),
+    key="deep",
+    use_static_file_server=True,
+    show_choose_file=True,
+    show_delete_file=True,
+    show_download_file=False,
+    show_new_folder=True,
+    show_upload_file=False,
+    )
+    
+    def create_documents(path):
+        # # Loading files
+        loader = Docx2txtLoader(path)
+        # # Split documents into chunks
+        pages = loader.load_and_split()
+        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        texts = text_splitter.split_documents(pages)
+        return texts
+
+    # embedding
+    embed_params = {
+        EmbedParams.TRUNCATE_INPUT_TOKENS: 512,
+        EmbedParams.RETURN_OPTIONS: {"input_text": True},
+    }
+
+    embeddings = WatsonxEmbeddings(
+        model_id="intfloat/multilingual-e5-large",
+        url=get_credentials()["url"],
+        apikey=get_credentials()["apikey"],
+        project_id=WATSONX_PROJECT_ID,
+        params=embed_params,
+    )
+
+    def create_vectorstore(path):
+        texts = create_documents(path)
+        return Chroma.from_documents(texts, embeddings)
+
+    def add_documents(vectorbase, path):
+        new_documents = create_documents(path)
+        vectorbase.add_documents(new_documents)
+        
+    file_path = "Documents RAG/Note de Cadrage - Europe de l'Ouest.docx"
+    docsearch = create_vectorstore(file_path)
+    
+    for filename in os.listdir("Documents RAG"):
+        add_documents(
+            docsearch,
+            filename,
+        )
+        st.write(filename)
+
+    complete_loading = st.button("Done")
+
 
 
 # to keep track of tasks performed by agents
@@ -371,57 +415,11 @@ def run_crewai_app():
         context = f"""{get_context(cube_name,view_name)} \nDataframe:\n{dataframe_prompt_input(cube_name,view_name)}"""
         return context
 
-    def create_documents(path):
-        # # Loading files
-        loader = Docx2txtLoader(path)
-        # # Split documents into chunks
-        pages = loader.load_and_split()
-        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        texts = text_splitter.split_documents(pages)
-        return texts
-
-    # embedding
-    embed_params = {
-        EmbedParams.TRUNCATE_INPUT_TOKENS: 512,
-        EmbedParams.RETURN_OPTIONS: {"input_text": True},
-    }
-
-    embeddings = WatsonxEmbeddings(
-        model_id="intfloat/multilingual-e5-large",
-        url=get_credentials()["url"],
-        apikey=get_credentials()["apikey"],
-        project_id=WATSONX_PROJECT_ID,
-        params=embed_params,
-    )
-
-    def create_vectorstore(path):
-        texts = create_documents(path)
-        return Chroma.from_documents(texts, embeddings)
-
-    def add_documents(vectorbase, path):
-        new_documents = create_documents(path)
-        vectorbase.add_documents(new_documents)
-
     def create_crewai_setup(cube_name, view_name):
         ### RAG Setup
 
         pythonREPL = PythonREPLTool()
         duckduckgo_search = DuckDuckGoSearchRun()
-
-        file_path = "Documents RAG/Note de Cadrage - Europe de l'Ouest.docx"
-        docsearch = create_vectorstore(file_path)
-        add_documents(
-            docsearch,
-            "Documents RAG/Note de Cadrage - Europe du Sud.docx",
-        )
-        add_documents(
-            docsearch,
-            "Documents RAG/Note de Cadrage - Royaume-Uni.docx",
-        )
-        add_documents(
-            docsearch,
-            "Documents RAG/Note de Cadrage - Scandinavie.docx",
-        )
 
         @tool
         def retriever(query: str) -> List[Document]:
@@ -578,7 +576,6 @@ def run_crewai_app():
         return crew_result
 
     with st.expander("About the Team:"):
-        st.subheader("Diagram")
         left_co, cent_co, last_co = st.columns(3)
         with cent_co:
             # st.image("my_img.png")
