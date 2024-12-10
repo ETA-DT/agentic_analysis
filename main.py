@@ -46,15 +46,16 @@ from streamlit_file_browser import st_file_browser
 # from crewai import LLM
 from dotenv import load_dotenv
 
-uploaded_file = st.sidebar.file_uploader('Choose a Doc File',type="docx")
-if uploaded_file:
-    st.sidebar.success(uploaded_file.name)
-    with open(os.path.join("tempDir",uploaded_file.name),"wb") as f: 
-      f.write(uploaded_file.getbuffer())         
-    st.sidebar.success("Saved File")
-
-st.sidebar.header('Directory')
-event = st.sidebar.st_file_browser(os.path.join("/workspaces/agentic_analysis/tempDir"),
+with st.sidebar:
+    uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
+    if uploaded_file:
+        st.success(uploaded_file.name)
+        with open(os.path.join("tempDir",uploaded_file.name),"wb") as f: 
+            f.write(uploaded_file.getbuffer())         
+            st.success("Saved File")
+    
+    st.sidebar.header('Directory')
+    event = st_file_browser(os.path.join("/workspaces/agentic_analysis/tempDir"),
     key="deep",
     use_static_file_server=True,
     show_choose_file=True,
@@ -62,8 +63,8 @@ event = st.sidebar.st_file_browser(os.path.join("/workspaces/agentic_analysis/te
     show_download_file=False,
     show_new_folder=True,
     show_upload_file=False,
-)
-st.sidebar.write(event)
+    )
+    st.write(event)
 
 load_dotenv()
 
