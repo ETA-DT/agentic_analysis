@@ -122,7 +122,7 @@ with st.sidebar:
     for filename in os.listdir("Documents RAG"):
         add_documents(
             docsearch,
-            os.path.join("Documents RAG" + filename),
+            os.path.join("Documents RAG/" + filename),
         )
         st.write(filename)
 
