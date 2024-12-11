@@ -163,15 +163,18 @@ with st.sidebar:
     # show_new_folder=True,
     # show_upload_file=False,
     # )
-    
+    document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
     for filename in os.listdir("Documents RAG"):
-        add_documents(
-            docsearch,
-            os.path.join("Documents RAG/" + filename),
-        )
+        if filename not in document_dataframe:
+                    add_documents(
+                        docsearch,
+                        os.path.join("Documents RAG/" + filename),
+                        )
+        document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
         st.write(filename)
+    
 
-    st.dataframe(pd.DataFrame({"Documents":list(set([source['source'] for source in docsearch.get()['metadatas']]))}), hide_index = True)
+    st.dataframe(pd.DataFrame({"Documents":document_dataframe}), hide_index = True)
 
     complete_loading = st.button("Done")
 
