@@ -161,12 +161,11 @@ st.set_page_config(layout="wide")
 with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
     if uploaded_file:
-        with open(os.path.join(doc_folder,uploaded_file.name),"wb") as f: 
+        with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
             f.write(uploaded_file.getbuffer())         
             st.success("Saved File")
-        files_name = update_doc_folder(doc_folder)
         if not(docsearch):
-            docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{files_name[0]}'))
+            docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file}'))
         document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
 
     st.sidebar.header('Directory')
