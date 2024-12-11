@@ -171,7 +171,7 @@ with st.sidebar:
         )
         st.write(filename)
 
-    st.dataframe(pd.DataFrame({"Documents":list(set([source['source'] for source in docsearch.get()['metadatas']]))}))
+    st.dataframe(pd.DataFrame({"Documents":list(set([source['source'] for source in docsearch.get()['metadatas']]))}), hide_index = True)
 
     complete_loading = st.button("Done")
 
