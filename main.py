@@ -150,6 +150,8 @@ def add_documents(vectorbase, path):
 #         st.error(f"An error occurred: {response.json()}")
 
 document_dataframe = []
+
+st.set_page_config(layout="wide")
 with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
     if uploaded_file:
@@ -346,7 +348,6 @@ class StreamToExpander:
 
 # Streamlit interface
 def run_crewai_app():
-    st.set_page_config(layout="wide")
     st.title("Watsonx AI Agent for dataframe analysis")
     cube_name = ""
     view_name = ""
