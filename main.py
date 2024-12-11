@@ -95,8 +95,14 @@ def create_vectorstore(path):
 
 docsearch = None
 doc_folder = "Documents RAG"
-files_name = os.listdir(doc_folder)
-files_name.remove(".gitignore")
+
+def update_doc_folder(folder): 
+    folder_list_dir = os.listdir(folder)
+    folder_list_dir.remove(".gitignore")
+    return folder_list_dir
+
+files_name = update_doc_folder(doc_folder)
+
 if files_name:
     file_path = os.path.join(f'{doc_folder}/{files_name[0]}')
     docsearch = create_vectorstore(file_path)
@@ -155,10 +161,10 @@ st.set_page_config(layout="wide")
 with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
     if uploaded_file:
-        st.success(uploaded_file.name)
-        with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
+        with open(os.path.join(doc_folder,uploaded_file.name),"wb") as f: 
             f.write(uploaded_file.getbuffer())         
             st.success("Saved File")
+        files_name = update_doc_folder(doc_folder)
         if not(docsearch):
             docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{files_name[0]}'))
         document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
