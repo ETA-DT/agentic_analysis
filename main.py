@@ -554,7 +554,7 @@ def run_crewai_app():
         # Define Senior Business Advisor Agent
         senior_business_advisor = Agent(
             role="Senior Business Advisor",
-            goal="Summarize key points from data analysis and present actionable insights for decision-making with relevant figures and by clearly stating the scope of the action.",
+            goal="Summarize key points from data analysis and present actionable insights for decision-making with relevant figures and by clearly stating the scope of the action and the reason why the company should focus on this scope.",
             backstory="""You are an experienced business consultant with a strong foundation in data-driven 
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
@@ -598,7 +598,7 @@ def run_crewai_app():
 
         # Define Task 2: Business Insights
         task2 = Task(
-            description="Based on the dataframe analysis and the internal documents insights, summarize briefly the analysis and provide clear, actionable business insights and recommendations for decision-making with figures and the targeted scope such as target indicator and country. The recommendations must be explicits with figures and precised indicators and justified regarding the data and the goals stated internal documents.",
+            description="Based on the dataframe analysis and the internal documents insights, summarize briefly the analysis and provide clear, actionable business insights and recommendations for decision-making with figures and the targeted scope such as target indicator and country. The recommendations must be explicits with figures and precised indicators and justified according to the data and the goals stated in internal documents and why is this scope is primarily targeted.",
             expected_output="Business insights and actions recommendations based on the data analysis and the internal documents.",
             agent=senior_business_advisor,
         )
