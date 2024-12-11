@@ -149,7 +149,7 @@ def add_documents(vectorbase, path):
 #     else:
 #         st.error(f"An error occurred: {response.json()}")
 
-
+document_dataframe = []
 with st.sidebar:
     uploaded_file = st.file_uploader('Choose a Doc File',type="docx")
     if uploaded_file:
@@ -171,16 +171,16 @@ with st.sidebar:
     # show_new_folder=True,
     # show_upload_file=False,
     # )
-        
-    for filename in os.listdir("Documents RAG"):
-        if filename not in document_dataframe:
-                    add_documents(
-                        docsearch,
-                        os.path.join(os.path.join(f'{doc_folder}/{filename}')),
-                        )
-        document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
-        st.write(filename)
     
+    if document_dataframe:
+        for filename in os.listdir("Documents RAG"):
+            if filename not in document_dataframe:
+                add_documents(
+                    docsearch,
+                    os.path.join(os.path.join(f'{doc_folder}/{filename}')),
+                    )
+            document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
+            st.write(filename)
 
     st.dataframe(pd.DataFrame({"Documents":document_dataframe}), hide_index = True)
 
