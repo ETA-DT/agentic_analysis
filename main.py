@@ -95,7 +95,8 @@ def create_vectorstore(path):
 
 doc_folder = "Documents RAG"
 files_name = os.listdir(doc_folder)
-if files_name:
+files_name.remove(".gitignore")
+if len(files_name) > 1:
     file_path = os.path.join(f'{doc_folder}/{files_name[0]}')
     docsearch = create_vectorstore(file_path)
 
