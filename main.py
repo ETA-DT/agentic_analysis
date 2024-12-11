@@ -633,10 +633,10 @@ def run_crewai_app():
         return crew_result
 
     with st.expander("About the Team:"):
-        left_co, cent_co, last_co = st.columns(3)
-        with cent_co:
-            # st.image("my_img.png")
-            pass
+        # left_co, cent_co, last_co = st.columns(3)
+        # with cent_co:
+        #     # st.image("my_img.png")
+        #     pass
 
         st.subheader("Senior Data Analyst")
         st.text(
