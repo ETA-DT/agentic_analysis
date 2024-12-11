@@ -158,9 +158,8 @@ with st.sidebar:
             f.write(uploaded_file.getbuffer())         
             st.success("Saved File")
         if not(docsearch):
-            docsearch = create_vectorstore(file_path)
-        else:
-            document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
+            docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{files_name[0]}'))
+        document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
 
     st.sidebar.header('Directory')
     # event = st_file_browser(os.path.join("Documents RAG"),
@@ -177,7 +176,7 @@ with st.sidebar:
         if filename not in document_dataframe:
                     add_documents(
                         docsearch,
-                        os.path.join("Documents RAG/" + filename),
+                        os.path.join(os.path.join(f'{doc_folder}/{filename}')),
                         )
         document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
         st.write(filename)
