@@ -164,6 +164,7 @@ with st.sidebar:
         with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
             f.write(uploaded_file.getbuffer())         
             st.success("Saved File")
+        files_name = update_doc_folder(doc_folder)
         if not(docsearch):
             docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file}'))
         document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
@@ -180,7 +181,7 @@ with st.sidebar:
     # )
     
     if document_dataframe:
-        for filename in os.listdir("Documents RAG"):
+        for filename in files_name:
             if filename not in document_dataframe:
                 add_documents(
                     docsearch,
