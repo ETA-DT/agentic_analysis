@@ -346,7 +346,7 @@ class StreamToExpander:
 
 # Streamlit interface
 def run_crewai_app():
-    
+    st.set_page_config(layout="wide")
     st.title("Watsonx AI Agent for dataframe analysis")
     cube_name = ""
     view_name = ""
