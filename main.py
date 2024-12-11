@@ -618,7 +618,7 @@ def run_crewai_app():
 
         # Define Task 4: Internal Document Insights
         task4 = Task(
-            description="Extract key insights and goals with the targeted indicators and countries from internal documents that align with company objectives and strategic planning for the upcoming year.",
+            description="Extract key insights and goals with the targeted indicators and countries from internal documents that align with company objectives and strategic planning for the upcoming year. Focus your research on the scope that seems primary according to the Data Analysis",
             expected_output="Insights and goals from internal documents relevant to strategic planning.",
             agent=internal_document_researcher,
         )
