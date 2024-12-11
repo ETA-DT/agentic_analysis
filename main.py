@@ -93,10 +93,11 @@ def create_vectorstore(path):
     texts = create_documents(path)
     return Chroma.from_documents(texts, embeddings)
 
+docsearch = None
 doc_folder = "Documents RAG"
 files_name = os.listdir(doc_folder)
 files_name.remove(".gitignore")
-if len(files_name) > 1:
+if files_name:
     file_path = os.path.join(f'{doc_folder}/{files_name[0]}')
     docsearch = create_vectorstore(file_path)
 
@@ -156,7 +157,11 @@ with st.sidebar:
         with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
             f.write(uploaded_file.getbuffer())         
             st.success("Saved File")
-    
+        if not(docsearch):
+            docsearch = create_vectorstore(file_path)
+        else:
+            document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
+
     st.sidebar.header('Directory')
     # event = st_file_browser(os.path.join("Documents RAG"),
     # key="deep",
@@ -167,7 +172,7 @@ with st.sidebar:
     # show_new_folder=True,
     # show_upload_file=False,
     # )
-    document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
+        
     for filename in os.listdir("Documents RAG"):
         if filename not in document_dataframe:
                     add_documents(
