@@ -93,9 +93,10 @@ def create_vectorstore(path):
     texts = create_documents(path)
     return Chroma.from_documents(texts, embeddings)
 
-files_name = os.listdir("Documents RAG")
+doc_folder = "Documents RAG"
+files_name = os.listdir(doc_folder)
 if files_name:
-    file_path = files_name[0]
+    file_path = os.path.join(f'{doc_folder}/{files_name[0]}')
     docsearch = create_vectorstore(file_path)
 
 def add_documents(vectorbase, path):
