@@ -598,7 +598,7 @@ def run_crewai_app():
         # Define Task 1: Data Analysis
         task1 = Task(
             description=f"Analyze the provided non indexed dataframe. {dataframe_enriched_prompt_input(cube_name=cube_name, view_name=view_name)}. Identify trends, anomalies, and key statistics. Provide actionable insights and key points for decision-makers.",
-            expected_output="Analysis of the dataframe with key points, trends, and actionable insights.",
+            expected_output="Analysis of the dataframe with key points, trends, and actionable insights to prioritize.",
             agent=senior_data_analyst,
         )
 
