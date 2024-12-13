@@ -168,7 +168,7 @@ with st.sidebar:
                     st.success("Saved File")
                 files_name = update_doc_folder(doc_folder)
             if not(docsearch):
-                docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file}'))
+                docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file.name}'))
             document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
 
     st.sidebar.header('Directory')
