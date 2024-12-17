@@ -203,11 +203,11 @@ with st.sidebar:
         st.sidebar.header('Directory')
         event = st_file_browser(os.path.join("Documents RAG"),
         key="deep",
-        use_static_file_server=True,
-        show_choose_file=True,
+        use_static_file_server=False,
+        show_choose_file=False,
         show_delete_file=True,
         show_download_file=False,
-        show_new_folder=True,
+        show_new_folder=False,
         show_upload_file=False,
         )
     
