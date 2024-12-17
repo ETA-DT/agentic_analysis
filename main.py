@@ -502,7 +502,7 @@ def run_crewai_app():
     current_dataframe = view_dataframe(cube_name, view_name)
     
     with st.expander("See Data"):
-        st.dataframe(current_dataframe, hide_index=True, width=800)
+        st.dataframe(current_dataframe, hide_index=True)
     
     def dataframe_prompt_input(cube_name, view_name):
         dataframe = view_dataframe(cube_name, view_name)
