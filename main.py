@@ -199,7 +199,7 @@ with st.sidebar:
             if not(docsearch):
                 docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file.name}'))
         document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
-
+        st.dataframe(document_dataframe)
         st.sidebar.header('Directory')
         event = st_file_browser(os.path.join("Documents RAG"),
         key="deep",
