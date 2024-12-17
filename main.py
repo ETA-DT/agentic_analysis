@@ -744,6 +744,12 @@ def run_crewai_app():
         st.header("Results:")
         st.markdown(crew_result)
 
+        tm1.cells.write_value(
+                crew_result,
+                cube_name='TM1py_output',
+                element_tuple=["GenAIAnalysis", "Results"],
+            )
+
 
 
 
