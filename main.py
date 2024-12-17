@@ -571,11 +571,12 @@ def run_crewai_app():
                 str: The result of the query execution as a string.
             """
             agent = create_pandas_dataframe_agent(
-                pandas_llm, df, verbose=True, allow_dangerous_code=True, agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,early_stopping_method="force",include_df_in_prompt=True,number_of_head_rows=len(df)
+                pandas_llm, df, suffix= "Always return a JSON dictionary that can be parsed into a data frame containing the requested information.", verbose=True, allow_dangerous_code=True, agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,early_stopping_method="force",include_df_in_prompt=True,number_of_head_rows=len(df)
             )
-            return agent.invoke(
+            response = agent.invoke(
                 query, handle_parsing_errors=True, return_intermediate_steps=False
             )
+            return response['output']
 
         # Define Senior Data Analyst Agent
         senior_data_analyst = Agent(
