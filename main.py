@@ -16,13 +16,28 @@ from ibm_watsonx_ai import Credentials
 
 # from langchain.llms.base import LLM
 from typing import Any, List, Mapping, Optional
-from crewai_tools import tool
-from crewai_tools import CSVSearchTool
+from crewai.tools import tool
+# from crewai_tools import CSVSearchTool
 from pydantic import BaseModel
+import docling
 
+from docling.backend.msword_backend import MsWordDocumentBackend
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.document import (ConversionResult, InputDocument, SectionHeaderItem)
+from docling.document_converter import DocumentConverter
+
+from typing import Iterator
+
+from langchain_core.document_loaders import BaseLoader
+from langchain_core.documents import Document as LCDocument
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+import json
 import os
 import re
 import configparser
+
+from pathlib import Path
 
 from TM1py.Services import TM1Service
 from TM1py.Utils.Utils import build_pandas_dataframe_from_cellset
@@ -66,14 +81,28 @@ def get_credentials():
         "apikey": os.getenv("WATSONX_APIKEY", ""),
     }
 
+class DoclingPDFLoader(BaseLoader):
+
+    def __init__(self, file_path: str | list[str]) -> None:
+        self._file_paths = file_path if isinstance(file_path, list) else [file_path]
+        self._converter = DocumentConverter()
+
+    def lazy_load(self) -> Iterator[LCDocument]:
+        for source in self._file_paths:
+            dl_doc = self._converter.convert(source).document
+            text = dl_doc.export_to_markdown()
+            yield LCDocument(page_content=text)
+
 def create_documents(path):
     # # Loading files
-    loader = Docx2txtLoader(path)
-    # # Split documents into chunks
-    pages = loader.load_and_split()
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    texts = text_splitter.split_documents(pages)
-    return texts
+    loader = DoclingPDFLoader(file_path=path)
+    text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200,
+    )
+    docs = loader.load()
+    splits = text_splitter.split_documents(docs)
+    return splits
 
 # embedding
 embed_params = {
@@ -82,7 +111,7 @@ embed_params = {
 }
 
 embeddings = WatsonxEmbeddings(
-    model_id="intfloat/multilingual-e5-large",
+    model_id="intfloat/multilingual-e5-large", #EmbeddingTypes.IBM_SLATE_125M_ENG.value,
     url=get_credentials()["url"],
     apikey=get_credentials()["apikey"],
     project_id=WATSONX_PROJECT_ID,
