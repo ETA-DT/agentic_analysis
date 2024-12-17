@@ -96,13 +96,16 @@ class DoclingPDFLoader(BaseLoader):
 def create_documents(path):
     # # Loading files
     loader = DoclingPDFLoader(file_path=path)
+    file_name = loader._converter.convert(path).document.name
     text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=200,
     )
     docs = loader.load()
+    docs[0].metadata = {"filename": file_name}
     splits = text_splitter.split_documents(docs)
     return splits
+
 
 # embedding
 embed_params = {
