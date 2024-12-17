@@ -198,7 +198,7 @@ with st.sidebar:
                 files_name = update_doc_folder(doc_folder)
             if not(docsearch):
                 docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file.name}'))
-            document_dataframe = list(set([source['filename'] for source in docsearch.get()['metadatas']]))
+            document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
 
     st.sidebar.header('Directory')
     # event = st_file_browser(os.path.join("Documents RAG"),
@@ -218,7 +218,7 @@ with st.sidebar:
                     docsearch,
                     os.path.join(os.path.join(f'{doc_folder}/{filename}')),
                     )
-            document_dataframe = list(set([source['filename'] for source in docsearch.get()['metadatas']]))
+            document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
             st.write(filename)
 
     st.dataframe(pd.DataFrame({"Documents":document_dataframe}), hide_index = True)
