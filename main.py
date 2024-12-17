@@ -296,7 +296,7 @@ pandas_llm = WatsonxLLM(
 )
 
 llm_llama = WatsonxLLM(
-    model_id="mistralai/mistral-large",
+    model_id="meta-llama/llama-3-405b-instruct",
     url="https://us-south.ml.cloud.ibm.com",
     params=parameters_llama,
     project_id=os.getenv("PROJECT_ID", ""),
