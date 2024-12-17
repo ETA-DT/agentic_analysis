@@ -50,9 +50,9 @@ from langchain_ibm import WatsonxEmbeddings
 from langchain_ibm import WatsonxLLM
 from langchain_ibm import ChatWatsonx
 from ibm_watsonx_ai.metanames import EmbedTextParamsMetaNames as EmbedParams
+from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from ibm_watsonx_ai.foundation_models.utils.enums import EmbeddingTypes
 from ibm_watsonx_ai.foundation_models.utils.enums import ModelTypes
-from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
 from ibm_watsonx_ai.foundation_models.utils.enums import DecodingMethods
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
@@ -240,7 +240,6 @@ task_values = []
 #     os.chdir(directory)
 #     return directory
 
-
 # CURRENT_DIRECTORY = set_current_directory()
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -289,7 +288,7 @@ chat = ChatWatsonx(
 )
 
 pandas_llm = WatsonxLLM(
-    model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
+    model_id="mistralai/mistral-large",  # codellama/codellama-34b-instruct-hf", #"meta-llama/llama-3-405b-instruct", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
     url=get_credentials().get("url"),
     apikey=get_credentials().get("apikey"),
     project_id=WATSONX_PROJECT_ID,
@@ -297,7 +296,7 @@ pandas_llm = WatsonxLLM(
 )
 
 llm_llama = WatsonxLLM(
-    model_id="meta-llama/llama-3-405b-instruct",
+    model_id="mistralai/mistral-large",
     url="https://us-south.ml.cloud.ibm.com",
     params=parameters_llama,
     project_id=os.getenv("PROJECT_ID", ""),
@@ -313,7 +312,7 @@ function_calling_llm = WatsonxLLM(
 
 
 llm = LLM(
-    model="watsonx/meta-llama/llama-3-405b-instruct",
+    model="watsonx/mistralai/mistral-large",
     base_url="https://api.watsonx.ai/v1",
     parameters=parameters_llama,
 )
