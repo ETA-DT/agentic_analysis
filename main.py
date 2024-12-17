@@ -200,16 +200,16 @@ with st.sidebar:
                 docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file.name}'))
             document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
 
-    st.sidebar.header('Directory')
-    event = st_file_browser(os.path.join("Documents RAG"),
-    key="deep",
-    use_static_file_server=True,
-    show_choose_file=True,
-    show_delete_file=True,
-    show_download_file=False,
-    show_new_folder=True,
-    show_upload_file=False,
-    )
+        st.sidebar.header('Directory')
+        event = st_file_browser(os.path.join("Documents RAG"),
+        key="deep",
+        use_static_file_server=True,
+        show_choose_file=True,
+        show_delete_file=True,
+        show_download_file=False,
+        show_new_folder=True,
+        show_upload_file=False,
+        )
     
     if document_dataframe:
         for filename in files_name:
