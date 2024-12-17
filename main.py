@@ -198,7 +198,7 @@ with st.sidebar:
                 files_name = update_doc_folder(doc_folder)
             if not(docsearch):
                 docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file.name}'))
-            document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
+        document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
 
         st.sidebar.header('Directory')
         event = st_file_browser(os.path.join("Documents RAG"),
