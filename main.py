@@ -202,17 +202,17 @@ with st.sidebar:
             if not(docsearch):
                 docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file.name}'))
         document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
-        st.dataframe(document_dataframe)
+
         st.sidebar.header('Directory')
-        event = st_file_browser(os.path.join("Documents RAG"),
-        key="deep",
-        use_static_file_server=False,
-        show_choose_file=False,
-        show_delete_file=True,
-        show_download_file=False,
-        show_new_folder=False,
-        show_upload_file=False,
-        )
+        # event = st_file_browser(os.path.join("Documents RAG"),
+        # key="deep",
+        # use_static_file_server=False,
+        # show_choose_file=False,
+        # show_delete_file=True,
+        # show_download_file=False,
+        # show_new_folder=False,
+        # show_upload_file=False,
+        # )
     
     if document_dataframe:
         for filename in files_name:
@@ -222,7 +222,7 @@ with st.sidebar:
                     os.path.join(os.path.join(f'{doc_folder}/{filename}')),
                     )
             document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
-            st.write(filename)
+            # st.write(filename)
 
     st.dataframe(pd.DataFrame({"Documents":document_dataframe}), hide_index = True)
 
