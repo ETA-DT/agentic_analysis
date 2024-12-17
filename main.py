@@ -189,7 +189,7 @@ with st.sidebar:
                     docsearch,
                     os.path.join(os.path.join(f'{doc_folder}/{filename}')),
                     )
-            document_dataframe = list(set([source['source'] for source in docsearch.get()['metadatas']]))
+            document_dataframe = list(set([source['filename'] for source in docsearch.get()['metadatas']]))
             st.write(filename)
 
     st.dataframe(pd.DataFrame({"Documents":document_dataframe}), hide_index = True)
