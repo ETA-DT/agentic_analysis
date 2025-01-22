@@ -64,7 +64,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 WATSONX_APIKEY = os.getenv("WATSONX_APIKEY", "")
-WATSONX_PROJECT_ID = os.getenv("PROJECT_ID", "")
+WATSONX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID", "")
 
 os.environ["WATSONX_URL"] = "https://us-south.ml.cloud.ibm.com/"
 os.environ["WATSONX_APIKEY"] = WATSONX_APIKEY
