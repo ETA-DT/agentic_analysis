@@ -308,13 +308,14 @@ function_calling_llm = WatsonxLLM(
     url="https://us-south.ml.cloud.ibm.com",
     params=parameters,
     project_id=WATSONX_PROJECT_ID,
+    apikey=WATSONX_APIKEY
 )
 
 
 llm = LLM(
     model="watsonx/meta-llama/llama-3-405b-instruct",
     base_url="https://api.watsonx.ai/v1",
-    parameters=parameters_llama,
+    parameters=parameters_llama
 )
 
 
