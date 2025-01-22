@@ -10,7 +10,7 @@ langchain
 langchain-experimental
 langchain-core
 langchain-ibm
-ibm-watsonx-ai
+ibm-watsonx-ai==1.1.24
 typing
 crewai-tools==0.14.0
 pydantic
