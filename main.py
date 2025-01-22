@@ -313,12 +313,12 @@ function_calling_llm = WatsonxLLM(
 )
 
 
-# llm = LLM(
-#     model="watsonx/meta-llama/llama-3-405b-instruct",
-#     base_url="https://api.watsonx.ai/v1",
-#     parameters=parameters_llama,
-#     apikey=WATSONX_APIKEY
-# )
+llm = LLM(
+    model="watsonx/meta-llama/llama-3-405b-instruct",
+    base_url="https://api.watsonx.ai/v1",
+    parameters=parameters_llama,
+    apikey=WATSONX_APIKEY
+)
 
 
 # display the console processing on streamlit UI
@@ -596,7 +596,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            llm=llm_llama,
+            llm=llm,
             function_calling_llm=function_calling_llm,
         )
 
@@ -608,7 +608,7 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm_llama,
+            llm=llm,
             function_calling_llm=function_calling_llm,
         )
 
@@ -620,7 +620,7 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm_llama,
+            llm=llm,
             tool=[duckduckgo_search],
             function_calling_llm=function_calling_llm,
         )
@@ -634,7 +634,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            llm=llm_llama,
+            llm=llm,
             function_calling_llm=function_calling_llm,
         )
 
