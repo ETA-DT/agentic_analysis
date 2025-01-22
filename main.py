@@ -273,12 +273,12 @@ parameters_llama = {
     "repetition_penalty": 1,
 }
 
-ibm_model = Model(
-    model_id=model_id,
-    params=parameters,
-    credentials=credentials,
-    project_id=WATSONX_PROJECT_ID,
-)
+# ibm_model = Model(
+#     model_id=model_id,
+#     params=parameters,
+#     credentials=credentials,
+#     project_id=WATSONX_PROJECT_ID,
+# )
 
 chat = ChatWatsonx(
     model_id="ibm/granite-34b-code-instruct",
