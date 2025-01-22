@@ -280,12 +280,12 @@ parameters_llama = {
 #     project_id=WATSONX_PROJECT_ID,
 # )
 
-chat = ChatWatsonx(
-    model_id="ibm/granite-34b-code-instruct",
-    url="https://us-south.ml.cloud.ibm.com",
-    project_id=WATSONX_PROJECT_ID,
-    params=parameters,
-)
+# chat = ChatWatsonx(
+#     model_id="ibm/granite-34b-code-instruct",
+#     url="https://us-south.ml.cloud.ibm.com",
+#     project_id=WATSONX_PROJECT_ID,
+#     params=parameters,
+# )
 
 pandas_llm = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
