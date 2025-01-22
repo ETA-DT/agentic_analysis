@@ -290,7 +290,7 @@ parameters_llama = {
 pandas_llm = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
     url=get_credentials().get("url"),
-    apikey=get_credentials().get("apikey"),
+    apikey=WATSONX_APIKEY,
     project_id=WATSONX_PROJECT_ID,
     params=parameters,
 )
@@ -300,6 +300,7 @@ llm_llama = WatsonxLLM(
     url="https://us-south.ml.cloud.ibm.com",
     params=parameters_llama,
     project_id=WATSONX_PROJECT_ID,
+    apikey=WATSONX_APIKEY
 )
 
 # Create the function calling llm
