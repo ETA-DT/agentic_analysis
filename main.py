@@ -299,7 +299,7 @@ llm_llama = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",
     url="https://us-south.ml.cloud.ibm.com",
     params=parameters_llama,
-    project_id=os.getenv("PROJECT_ID", ""),
+    project_id=WATSONX_PROJECT_ID,
 )
 
 # Create the function calling llm
@@ -307,7 +307,7 @@ function_calling_llm = WatsonxLLM(
     model_id="mistralai/mistral-large",
     url="https://us-south.ml.cloud.ibm.com",
     params=parameters,
-    project_id=os.getenv("PROJECT_ID", ""),
+    project_id=WATSONX_PROJECT_ID,
 )
 
 
