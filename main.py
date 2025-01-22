@@ -6,7 +6,7 @@ import time
 import pandas as pd
 import mdpd
 import streamlit as st
-from crewai import Agent, Task, Crew, Process, LLM
+from crewai import Agent, Task, Crew, Process #,LLM
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain.agents import Tool, AgentType, AgentExecutor, create_react_agent
 from langchain_experimental.tools.python.tool import PythonREPLTool
@@ -58,7 +58,7 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
 from streamlit_file_browser import st_file_browser
 
-# from crewai import LLM
+from crewai import LLM
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -290,17 +290,17 @@ parameters_llama = {
 pandas_llm = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
     url=get_credentials().get("url"),
-    apikey=WATSONX_APIKEY,
     project_id=WATSONX_PROJECT_ID,
+    apikey=WATSONX_APIKEY,
     params=parameters,
 )
 
 llm_llama = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",
     url="https://us-south.ml.cloud.ibm.com",
-    params=parameters_llama,
     project_id=WATSONX_PROJECT_ID,
-    apikey=WATSONX_APIKEY
+    apikey=WATSONX_APIKEY,
+    params=parameters_llama
 )
 
 # Create the function calling llm
@@ -597,8 +597,8 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            llm=llm,
-            function_calling_llm=function_calling_llm,
+            # llm=llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Senior Business Advisor Agent
@@ -609,8 +609,8 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm,
-            function_calling_llm=function_calling_llm,
+            # llm=llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Macroeconomics Researcher Agent
@@ -621,9 +621,9 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm,
+            # llm=llm,
             tool=[duckduckgo_search],
-            function_calling_llm=function_calling_llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Internal Document Researcher Agent
@@ -635,8 +635,8 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            llm=llm,
-            function_calling_llm=function_calling_llm,
+            # llm=llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Task 1: Data Analysis
