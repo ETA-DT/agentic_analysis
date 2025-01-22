@@ -317,6 +317,7 @@ llm = LLM(
     model="watsonx/meta-llama/llama-3-405b-instruct",
     base_url="https://api.watsonx.ai/v1",
     parameters=parameters_llama,
+    project_id=WATSONX_PROJECT_ID,
     apikey=WATSONX_APIKEY
 )
 
