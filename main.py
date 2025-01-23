@@ -77,7 +77,7 @@ credentials = Credentials(url=WATSONX_URL, api_key=WATSONX_APIKEY)
 
 def get_credentials():
     return {
-        "url": "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation?version=2023-05-29",
+        "url": "https://us-south.ml.cloud.ibm.com/",
         "apikey":"rRQSWj0DA1hVRmYpqMpJf3sdNp4mwIOkSZ7-bgxM0JDo",
     }
 
