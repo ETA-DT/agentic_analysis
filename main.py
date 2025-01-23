@@ -61,6 +61,7 @@ from streamlit_file_browser import st_file_browser
 from crewai import LLM
 from dotenv import load_dotenv
 import litellm
+from litellm import completion
 
 load_dotenv()
 
