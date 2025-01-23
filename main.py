@@ -599,7 +599,7 @@ def run_crewai_app():
             allow_delegation=True,
             tools=[dataframe_creator],
             llm=pandas_llm,
-            function_calling_llm=function_calling_llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Senior Business Advisor Agent
@@ -611,7 +611,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             llm=pandas_llm,
-            function_calling_llm=function_calling_llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Macroeconomics Researcher Agent
@@ -624,7 +624,7 @@ def run_crewai_app():
             allow_delegation=True,
             llm=pandas_llm,
             tool=[duckduckgo_search],
-            function_calling_llm=function_calling_llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Internal Document Researcher Agent
@@ -637,7 +637,7 @@ def run_crewai_app():
             allow_delegation=True,
             tools=[retriever],
             llm=pandas_llm,
-            function_calling_llm=function_calling_llm,
+            # function_calling_llm=function_calling_llm,
         )
 
         # Define Task 1: Data Analysis
