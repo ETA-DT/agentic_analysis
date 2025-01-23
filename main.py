@@ -13,7 +13,6 @@ from langchain_experimental.tools.python.tool import PythonREPLTool
 from langchain_core.runnables import chain
 from ibm_watsonx_ai.foundation_models import Model
 from ibm_watsonx_ai import Credentials
-from langchain.llms.base import LLM
 
 # from langchain.llms.base import LLM
 from typing import Any, List, Mapping, Optional
@@ -61,26 +60,25 @@ from streamlit_file_browser import st_file_browser
 
 # from crewai import LLM
 from dotenv import load_dotenv
-import litellm
-from litellm import completion
 
 load_dotenv()
 
-WATSONX_URL = os.getenv("WATSONX_URL", "")
-WATSONX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID", "")
 WATSONX_APIKEY = os.getenv("WATSONX_APIKEY", "")
+WATSONX_PROJECT_ID = os.getenv("PROJECT_ID", "")
 
-os.environ["WATSONX_URL"] = WATSONX_URL
+os.environ["WATSONX_URL"] = "https://us-south.ml.cloud.ibm.com/"
 os.environ["WATSONX_APIKEY"] = WATSONX_APIKEY
 os.environ["WATSONX_PROJECT_ID"] = WATSONX_PROJECT_ID
+
+WATSONX_URL = os.getenv("WATSONX_URL", "")
 
 credentials = Credentials(url=WATSONX_URL, api_key=WATSONX_APIKEY)
 
 
 def get_credentials():
     return {
-        "url": "https://us-south.ml.cloud.ibm.com/",
-        "apikey":"rRQSWj0DA1hVRmYpqMpJf3sdNp4mwIOkSZ7-bgxM0JDo",
+        "url": "https://us-south.ml.cloud.ibm.com",
+        "apikey": os.getenv("WATSONX_APIKEY", ""),
     }
 
 class DoclingPDFLoader(BaseLoader):
@@ -282,82 +280,41 @@ ibm_model = Model(
     project_id=WATSONX_PROJECT_ID,
 )
 
-class WatsonxLLM(LLM):
-    def __init__(self, api_key: str, model_id: str):
-        self.api_key = api_key
-        self.model_id = model_id
-        self.endpoint = f"https://us-south.ml.cloud.ibm.com/"  # Update if needed
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-
-    def complete(self, prompt: str) -> str:
-        payload = {
-            "model_id": self.model_id,
-            "input": prompt,
-            "parameters": {
-                "temperature": 0.7,
-                "max_new_tokens": 200
-            }
-        }
-        
-        response = requests.post(self.endpoint, json=payload, headers=self.headers)
-        if response.status_code == 200:
-            return response.json()["results"][0]["generated_text"]
-        else:
-            return f"Error: {response.text}"
-
-watsonx_llm = WatsonxLLM(api_key=WATSONX_APIKEY, model_id="meta-llama/llama-3-2-3b-instruct")
-
-
-
-# chat = ChatWatsonx(
-#     model_id="ibm/granite-34b-code-instruct",
-#     url="https://us-south.ml.cloud.ibm.com",
-#     project_id=WATSONX_PROJECT_ID,
-#     params=parameters,
-# )
+chat = ChatWatsonx(
+    model_id="ibm/granite-34b-code-instruct",
+    url="https://us-south.ml.cloud.ibm.com",
+    project_id=WATSONX_PROJECT_ID,
+    params=parameters,
+)
 
 pandas_llm = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
     url=get_credentials().get("url"),
+    apikey=get_credentials().get("apikey"),
     project_id=WATSONX_PROJECT_ID,
-    apikey=WATSONX_APIKEY,
     params=parameters,
 )
 
 llm_llama = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",
     url="https://us-south.ml.cloud.ibm.com",
-    project_id=WATSONX_PROJECT_ID,
-    apikey=WATSONX_APIKEY,
-    params=parameters_llama
+    params=parameters_llama,
+    project_id=os.getenv("PROJECT_ID", ""),
 )
 
-# # Create the function calling llm
-# function_calling_llm = WatsonxLLM(
-#     model_id="mistralai/mistral-large",
-#     url="https://us-south.ml.cloud.ibm.com",
-#     params=parameters,
-#     project_id=WATSONX_PROJECT_ID,
-#     apikey=WATSONX_APIKEY
-# )
+# Create the function calling llm
+function_calling_llm = WatsonxLLM(
+    model_id="mistralai/mistral-large",
+    url="https://us-south.ml.cloud.ibm.com",
+    params=parameters,
+    project_id=os.getenv("PROJECT_ID", ""),
+)
 
 
-# llm = LLM(
-#     model="watsonx/meta-llama/llama-3-405b-instruct",
-#     base_url="https://api.watsonx.ai/v1",
-#     parameters=parameters_llama,
-#     project_id=WATSONX_PROJECT_ID,
-#     apikey=WATSONX_APIKEY,
-#     litellm_provider="watsonx"
-# )
-
-response = completion(
-  model="watsonx/meta-llama/llama-3-405b-instruct",
-  messages=[{ "content": "what is your favorite colour?","role": "user"}],
-  project_id=os.environ["WATSONX_PROJECT_ID"]
+llm = LLM(
+    model="watsonx/meta-llama/llama-3-405b-instruct",
+    base_url="https://api.watsonx.ai/v1",
+    parameters=parameters_llama,
 )
 
 
@@ -433,7 +390,7 @@ def run_crewai_app():
     st.title("Watsonx AI Agent for dataframe analysis")
     cube_name = ""
     view_name = ""
-    st.text(response)
+
     # définir et se connecter à l'instance tm1
     with TM1Service(**config["tango_core_model"]) as tm1:
 
@@ -636,8 +593,8 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            llm=watsonx_llm,
-            # function_calling_llm=function_calling_llm,
+            llm=llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Senior Business Advisor Agent
@@ -648,8 +605,8 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            llm=watsonx_llm,
-            # function_calling_llm=function_calling_llm,
+            llm=llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Macroeconomics Researcher Agent
@@ -660,9 +617,9 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            llm=watsonx_llm,
+            llm=llm,
             tool=[duckduckgo_search],
-            # function_calling_llm=function_calling_llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Internal Document Researcher Agent
@@ -674,8 +631,8 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            llm=watsonx_llm,
-            # function_calling_llm=function_calling_llm,
+            llm=llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Task 1: Data Analysis
