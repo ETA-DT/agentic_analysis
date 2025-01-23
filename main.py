@@ -288,7 +288,7 @@ chat = ChatWatsonx(
 )
 
 pandas_llm = WatsonxLLM(
-    model_id="meta-llama/llama-3-2-90b-vision-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
+    model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
     url=get_credentials().get("url"),
     apikey=get_credentials().get("apikey"),
     project_id=WATSONX_PROJECT_ID,
