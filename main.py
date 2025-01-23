@@ -13,6 +13,7 @@ from langchain_experimental.tools.python.tool import PythonREPLTool
 from langchain_core.runnables import chain
 from ibm_watsonx_ai.foundation_models import Model
 from ibm_watsonx_ai import Credentials
+from langchain.llms.base import LLM
 
 # from langchain.llms.base import LLM
 from typing import Any, List, Mapping, Optional
@@ -58,7 +59,7 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
 from streamlit_file_browser import st_file_browser
 
-from crewai import LLM
+# from crewai import LLM
 from dotenv import load_dotenv
 import litellm
 from litellm import completion
@@ -274,12 +275,23 @@ parameters_llama = {
     "repetition_penalty": 1,
 }
 
-# ibm_model = Model(
-#     model_id=model_id,
-#     params=parameters,
-#     credentials=credentials,
-#     project_id=WATSONX_PROJECT_ID,
-# )
+ibm_model = Model(
+    model_id=model_id,
+    params=parameters,
+    credentials=credentials,
+    project_id=WATSONX_PROJECT_ID,
+)
+class IBMWatsonLLM(LLM):
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        return ibm_model.generate_text(prompt=prompt, guardrails=False)
+
+    @property
+    def _llm_type(self) -> str:
+        return "ibm_watson"
+
+    def generate_text(self, prompt):
+        return self._call(prompt)
+llm = IBMWatsonLLM()
 
 # chat = ChatWatsonx(
 #     model_id="ibm/granite-34b-code-instruct",
@@ -605,7 +617,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            llm=llm_llama,
+            llm=llm,
             # function_calling_llm=function_calling_llm,
         )
 
@@ -617,7 +629,7 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm_llama,
+            llm=llm,
             # function_calling_llm=function_calling_llm,
         )
 
@@ -629,7 +641,7 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm_llama,
+            llm=llm,
             tool=[duckduckgo_search],
             # function_calling_llm=function_calling_llm,
         )
@@ -643,7 +655,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            llm=llm_llama,
+            llm=llm,
             # function_calling_llm=function_calling_llm,
         )
 
