@@ -598,7 +598,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            llm=llm_llama,
+            llm=pandas_llm,
             function_calling_llm=function_calling_llm,
         )
 
@@ -610,7 +610,7 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm_llama,
+            llm=pandas_llm,
             function_calling_llm=function_calling_llm,
         )
 
@@ -622,7 +622,7 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm_llama,
+            llm=pandas_llm,
             tool=[duckduckgo_search],
             function_calling_llm=function_calling_llm,
         )
@@ -636,7 +636,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            llm=llm_llama,
+            llm=pandas_llm,
             function_calling_llm=function_calling_llm,
         )
 
