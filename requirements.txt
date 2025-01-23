@@ -13,7 +13,9 @@ langchain-ibm
 ibm-watsonx-ai==1.1.24
 typing
 crewai-tools==0.14.0
-pydantic
+pydantic==2.10.2
+pydantic_core==2.27.1
+pydantic-settings==2.6.1
 configparser
 tm1py
 python-dotenv
