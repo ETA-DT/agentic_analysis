@@ -60,6 +60,7 @@ from streamlit_file_browser import st_file_browser
 
 from crewai import LLM
 from dotenv import load_dotenv
+import litellm
 
 load_dotenv()
 
@@ -76,7 +77,7 @@ credentials = Credentials(url=WATSONX_URL, api_key=WATSONX_APIKEY)
 
 def get_credentials():
     return {
-        "url": "https://us-south.ml.cloud.ibm.com",
+        "url": "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation?version=2023-05-29",
         "apikey":"rRQSWj0DA1hVRmYpqMpJf3sdNp4mwIOkSZ7-bgxM0JDo",
     }
 
@@ -294,32 +295,32 @@ pandas_llm = WatsonxLLM(
     params=parameters,
 )
 
-llm_llama = WatsonxLLM(
-    model_id="meta-llama/llama-3-405b-instruct",
-    url="https://us-south.ml.cloud.ibm.com",
-    project_id=WATSONX_PROJECT_ID,
-    apikey=WATSONX_APIKEY,
-    params=parameters_llama
-)
+# llm_llama = WatsonxLLM(
+#     model_id="meta-llama/llama-3-405b-instruct",
+#     url="https://us-south.ml.cloud.ibm.com",
+#     project_id=WATSONX_PROJECT_ID,
+#     apikey=WATSONX_APIKEY,
+#     params=parameters_llama
+# )
 
-# Create the function calling llm
-function_calling_llm = WatsonxLLM(
-    model_id="mistralai/mistral-large",
-    url="https://us-south.ml.cloud.ibm.com",
-    params=parameters,
-    project_id=WATSONX_PROJECT_ID,
-    apikey=WATSONX_APIKEY
-)
+# # Create the function calling llm
+# function_calling_llm = WatsonxLLM(
+#     model_id="mistralai/mistral-large",
+#     url="https://us-south.ml.cloud.ibm.com",
+#     params=parameters,
+#     project_id=WATSONX_PROJECT_ID,
+#     apikey=WATSONX_APIKEY
+# )
 
 
-llm = LLM(
-    model="watsonx/meta-llama/llama-3-405b-instruct",
-    base_url="https://api.watsonx.ai/v1",
-    parameters=parameters_llama,
-    project_id=WATSONX_PROJECT_ID,
-    apikey=WATSONX_APIKEY,
-    litellm_provider="watsonx"
-)
+# llm = LLM(
+#     model="watsonx/meta-llama/llama-3-405b-instruct",
+#     base_url="https://api.watsonx.ai/v1",
+#     parameters=parameters_llama,
+#     project_id=WATSONX_PROJECT_ID,
+#     apikey=WATSONX_APIKEY,
+#     litellm_provider="watsonx"
+# )
 
 
 # display the console processing on streamlit UI
