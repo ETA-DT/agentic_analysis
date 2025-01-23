@@ -322,6 +322,12 @@ llm_llama = WatsonxLLM(
 #     litellm_provider="watsonx"
 # )
 
+response = completion(
+  model="watsonx/meta-llama/llama-3-1-8b-instruct",
+  messages=[{ "content": "what is your favorite colour?","role": "user"}],
+  project_id=os.environ["WATSONX_PROJECT_ID"]
+)
+
 
 # display the console processing on streamlit UI
 class StreamToExpander:
@@ -395,7 +401,7 @@ def run_crewai_app():
     st.title("Watsonx AI Agent for dataframe analysis")
     cube_name = ""
     view_name = ""
-
+    st.text(response)
     # définir et se connecter à l'instance tm1
     with TM1Service(**config["tango_core_model"]) as tm1:
 
