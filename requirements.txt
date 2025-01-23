@@ -6,7 +6,7 @@ numpy==1.26.4
 mdpd
 langchain_community==0.3.8
 duckduckgo-search
-langchain==0.3.15
+langchain==0.3.9
 langchain-experimental==0.3.3
 langchain-core==0.3.21
 langchain-ibm
