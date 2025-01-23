@@ -324,7 +324,7 @@ llm_llama = WatsonxLLM(
 # )
 
 response = completion(
-  model="watsonx/meta-llama/llama-3-1-8b-instruct",
+  model="watsonx/meta-llama/llama-3-405b-instruct",
   messages=[{ "content": "what is your favorite colour?","role": "user"}],
   project_id=os.environ["WATSONX_PROJECT_ID"]
 )
