@@ -286,7 +286,7 @@ class WatsonxLLM(LLM):
     def __init__(self, api_key: str, model_id: str):
         self.api_key = api_key
         self.model_id = model_id
-        self.endpoint = f"https://us-south.ml.cloud.ibm.com/ml/v1/text/generation"  # Update if needed
+        self.endpoint = f"https://us-south.ml.cloud.ibm.com/"  # Update if needed
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
