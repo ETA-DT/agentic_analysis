@@ -597,8 +597,8 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            # llm=llm,
-            # function_calling_llm=function_calling_llm,
+            llm=llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Senior Business Advisor Agent
@@ -609,8 +609,8 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            # llm=llm,
-            # function_calling_llm=function_calling_llm,
+            llm=llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Macroeconomics Researcher Agent
@@ -621,9 +621,9 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            # llm=llm,
+            llm=llm,
             tool=[duckduckgo_search],
-            # function_calling_llm=function_calling_llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Internal Document Researcher Agent
@@ -635,8 +635,8 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            # llm=llm,
-            # function_calling_llm=function_calling_llm,
+            llm=llm,
+            function_calling_llm=function_calling_llm,
         )
 
         # Define Task 1: Data Analysis
