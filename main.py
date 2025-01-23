@@ -281,17 +281,37 @@ ibm_model = Model(
     credentials=credentials,
     project_id=WATSONX_PROJECT_ID,
 )
-class IBMWatsonLLM(LLM):
-    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        return ibm_model.generate_text(prompt=prompt, guardrails=False)
+from crewai.llms import LLM
 
-    @property
-    def _llm_type(self) -> str:
-        return "ibm_watson"
+class WatsonxLLM(LLM):
+    def __init__(self, api_key: str, model_id: str):
+        self.api_key = api_key
+        self.model_id = model_id
+        self.endpoint = f"https://us-south.ml.cloud.ibm.com/ml/v1/text/generation"  # Update if needed
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
 
-    def generate_text(self, prompt):
-        return self._call(prompt)
-llm = IBMWatsonLLM()
+    def complete(self, prompt: str) -> str:
+        payload = {
+            "model_id": self.model_id,
+            "input": prompt,
+            "parameters": {
+                "temperature": 0.7,
+                "max_new_tokens": 200
+            }
+        }
+        
+        response = requests.post(self.endpoint, json=payload, headers=self.headers)
+        if response.status_code == 200:
+            return response.json()["results"][0]["generated_text"]
+        else:
+            return f"Error: {response.text}"
+
+watsonx_llm = WatsonxLLM(api_key=WATSONX_APIKEY, model_id="meta-llama/llama-3-2-3b-instruct")
+
+
 
 # chat = ChatWatsonx(
 #     model_id="ibm/granite-34b-code-instruct",
@@ -617,7 +637,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            llm=llm,
+            llm=watsonx_llm,
             # function_calling_llm=function_calling_llm,
         )
 
@@ -629,7 +649,7 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm,
+            llm=watsonx_llm,
             # function_calling_llm=function_calling_llm,
         )
 
@@ -641,7 +661,7 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            llm=llm,
+            llm=watsonx_llm,
             tool=[duckduckgo_search],
             # function_calling_llm=function_calling_llm,
         )
@@ -655,7 +675,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            llm=llm,
+            llm=watsonx_llm,
             # function_calling_llm=function_calling_llm,
         )
 
