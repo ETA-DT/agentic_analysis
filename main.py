@@ -295,13 +295,13 @@ pandas_llm = WatsonxLLM(
     params=parameters,
 )
 
-# llm_llama = WatsonxLLM(
-#     model_id="meta-llama/llama-3-405b-instruct",
-#     url="https://us-south.ml.cloud.ibm.com",
-#     project_id=WATSONX_PROJECT_ID,
-#     apikey=WATSONX_APIKEY,
-#     params=parameters_llama
-# )
+llm_llama = WatsonxLLM(
+    model_id="meta-llama/llama-3-405b-instruct",
+    url="https://us-south.ml.cloud.ibm.com",
+    project_id=WATSONX_PROJECT_ID,
+    apikey=WATSONX_APIKEY,
+    params=parameters_llama
+)
 
 # # Create the function calling llm
 # function_calling_llm = WatsonxLLM(
@@ -598,7 +598,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
-            llm=pandas_llm,
+            llm=llm_llama,
             # function_calling_llm=function_calling_llm,
         )
 
@@ -610,7 +610,7 @@ def run_crewai_app():
                             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
             verbose=True,
             allow_delegation=True,
-            llm=pandas_llm,
+            llm=llm_llama,
             # function_calling_llm=function_calling_llm,
         )
 
@@ -622,7 +622,7 @@ def run_crewai_app():
                             and their implications for corporate financial strategies.""",
             verbose=True,
             allow_delegation=True,
-            llm=pandas_llm,
+            llm=llm_llama,
             tool=[duckduckgo_search],
             # function_calling_llm=function_calling_llm,
         )
@@ -636,7 +636,7 @@ def run_crewai_app():
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
-            llm=pandas_llm,
+            llm=llm_llama,
             # function_calling_llm=function_calling_llm,
         )
 
