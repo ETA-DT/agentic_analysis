@@ -584,7 +584,7 @@ def run_crewai_app():
             role="Senior Data Analyst",
             goal=(
                 "Conduct a comprehensive analysis of the provided dataframe to identify key trends, anomalies, and statistical insights. "
-                "Support each insight with precise data metrics and highlight any outliers that may suggest actionable issues."
+                "Support each insight with precise data metrics and highlight any outliers or cost inefficiencies that may suggest actionable issues."
             ),
             backstory=(
                 "You are a data expert with a strong background in applied mathematics and computer science, "
@@ -596,7 +596,7 @@ def run_crewai_app():
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-    
+        
         # Agent 2: Internal Document Strategist
         internal_document_researcher = Agent(
             role="Internal Document Researcher",
@@ -613,58 +613,40 @@ def run_crewai_app():
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-    
-        # # Agent 3: Macroeconomic Analyst
-        # macroeconomics_researcher = Agent(
-        #     role="Macroeconomics Researcher",
-        #     goal=(
-        #         "Analyze current macroeconomic trends and forecasts, then evaluate their potential impact on the company’s financial planning and market positioning. "
-        #         "Provide clear insights on external economic risks and opportunities."
-        #     ),
-        #     backstory=(
-        #         "You are an expert economist with deep knowledge of global market trends and economic indicators. "
-        #         "Your analysis helps bridge external economic conditions with internal business strategies."
-        #     ),
-        #     verbose=True,
-        #     allow_delegation=True,
-        #     tools=[duckduckgo_search],
-        #     llm=llm,
-        #     function_calling_llm=function_calling_llm,
-        # )
-    
-        # Agent 4: Strategic Business Advisor
+        
+        # Agent 4: Strategic Business Advisor (Final Output)
         senior_business_advisor = Agent(
             role="Senior Business Advisor",
             goal=(
-                "Integrate the findings from the data analysis, and internal document insights to develop a set of actionable business recommendations. "
-                "For each recommendation, provide supporting data, clear next steps, and expected outcomes."
+                "Integrate the findings from the data analysis and internal document insights to produce a prioritized list of concrete, actionable recommendations. "
+                "Each recommendation must include precise figures (for example, specifying the percentage or amount by which specific costs should be adjusted) "
+                "and be fully supported by data and documented evidence. Provide clear next steps and explicit justification for each action item."
             ),
             backstory=(
                 "You are a seasoned business consultant with extensive experience in data-driven decision-making. "
-                "Your expertise lies in translating complex analytical results into clear, actionable business strategies."
+                "Your expertise lies in translating complex analytical results into clear, prioritized, and actionable business strategies that include precise numeric adjustments."
             ),
             verbose=True,
             allow_delegation=True,
-            # This agent may call upon both the retriever and dataframe tools for cross-referencing information.
             tools=[retriever, dataframe_creator],
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-    
+        
         # --------------------- Adjusted Task Definitions ---------------------
-    
+        
         # Task 1: Detailed Data Analysis
         task1 = Task(
             description=(
-                "Perform an in-depth analysis of the dataframe. Identify significant trends, outliers, and statistical anomalies. "
-                "Support your findings with quantitative metrics and suggest any potential areas of concern or opportunity."
+                "Perform an in-depth analysis of the dataframe. Identify significant trends, outliers, and cost inefficiencies. "
+                "Support your findings with quantitative metrics (including figures and percentages) and suggest potential areas of concern or opportunity."
             ),
             expected_output=(
-                "A detailed report that includes major data trends, identified anomalies, key performance metrics, and preliminary insights."
+                "A detailed report that includes major data trends, identified anomalies, key performance metrics, and preliminary insights with supporting figures."
             ),
             agent=senior_data_analyst,
         )
-    
+        
         # Task 2: Extract Internal Document Insights
         task2 = Task(
             description=(
@@ -676,42 +658,27 @@ def run_crewai_app():
             ),
             agent=internal_document_researcher,
         )
-    
-        # # Task 3: Macroeconomic Analysis
-        # task3 = Task(
-        #     description=(
-        #         "Research current macroeconomic trends and forecasts relevant to the industry. "
-        #         "Analyze how these external factors could impact the company’s financial planning and operational strategy, detailing risks and opportunities."
-        #     ),
-        #     expected_output=(
-        #         "A comprehensive report outlining relevant macroeconomic trends, their potential impacts on the company, and suggestions for risk mitigation or opportunity leveraging."
-        #     ),
-        #     agent=macroeconomics_researcher,
-        # )
-    
-        # Task 4: Integrated Business Recommendations
+        
+        # Task 4: Integrated Business Recommendations as a List of Actionable Items
         task4 = Task(
             description=(
-                "Based on the findings from the data analysis and internal document insights, "
-                "develop a comprehensive set of actionable business recommendations. "
-                "For each recommendation, provide supporting data, clear next steps, and expected outcomes."
+                "Based on the findings from the data analysis and internal document insights, develop a prioritized list of concrete, actionable business recommendations. "
+                "Each recommendation must include the specific action (e.g., 'Increase production costs by 5% for the X division' or 'Reduce overhead expenses by $50,000 per quarter'), "
+                "the supporting data metrics and document evidence, clear next steps, and an explicit justification."
             ),
             expected_output=(
-                "A structured final report that integrates all previous insights and presents clear, data-driven recommendations with detailed next steps."
+                "A structured final report that presents a list of actionable recommendations. Each recommendation should include the recommended action, "
+                "specific figures or percentages, supporting data and document references, detailed next steps, and a clear justification."
             ),
             agent=senior_business_advisor,
         )
-    
+        
         # --------------------- Assemble and Execute the Crew ---------------------
-    
-        # By ordering the tasks sequentially—starting with data analysis and internal insights,
-        # followed by macroeconomic research, and culminating in integrated recommendations—
-        # you ensure that each step builds on the previous outputs.
+        
         product_crew = Crew(
             agents=[
                 senior_data_analyst,
                 internal_document_researcher,
-                # macroeconomics_researcher,
                 senior_business_advisor,
             ],
             tasks=[task1, task2, task4],
@@ -721,46 +688,57 @@ def run_crewai_app():
         crew_result = product_crew.kickoff()
         return crew_result
 
+
     with st.expander("About the Team:"):
         # left_co, cent_co, last_co = st.columns(3)
         # with cent_co:
         #     # st.image("my_img.png")
         #     pass
 
-        st.subheader("Senior Data Analyst")
-        st.text(
-            f"""
-        Role = Senior Data Analyst
-        Goal = Analyze the dataframe and provide clear, actionable key points.
-        Backstory = You are a senior data analyst with a strong background 
-                    in applied mathematics and computer science, skilled in deriving insights 
-                    from complex datasets.
-        Task = Analyze the provided dataframe. Identify trends, anomalies, and key statistics.
-               Provide actionable insights and key points for decision-makers."""
-        )
+        for agent_name,task_number in zip(agents,taks):
+            st.subheader(agent_name.role)
+            st.text(
+                f"""
+            Role = {agent_name.role}
+            Goal = {agent_name.goal}
+            Backstory = {agent_name.backstory}
+            Task = {task_number.description}"""
+            )
+            
+        # st.subheader("Senior Data Analyst")
+        # st.text(
+        #     f"""
+        # Role = Senior Data Analyst
+        # Goal = Analyze the dataframe and provide clear, actionable key points.
+        # Backstory = You are a senior data analyst with a strong background 
+        #             in applied mathematics and computer science, skilled in deriving insights 
+        #             from complex datasets.
+        # Task = Analyze the provided dataframe. Identify trends, anomalies, and key statistics.
+        #        Provide actionable insights and key points for decision-makers."""
+        # )
 
-        st.subheader("Senior Business Advisor")
-        st.text(
-            """
-        Role = Senior Business Advisor
-        Goal = Summarize key points from data analysis and present actionable insights for decision-making with relevant figures and by clearly stating the scope of the action.
-        Backstory = You are an experienced business consultant with a strong foundation in data-driven 
-                    decision-making, skilled at distilling complex analyses into clear, impactful recommendations.
-        Task = Based on the dataframe analysis and the internal documents insights, summarize briefly the analysis and provide clear,
-               actionable business insights and recommendations for decision-making with figures and the targeted scope. The recommendations
-               must be explicits with figures and precised indicators and scope and justified regarding the data and the internal documents."""
-        )
+        # st.subheader("Senior Business Advisor")
+        # st.text(
+        #     """
+        # Role = Senior Business Advisor
+        # Goal = Summarize key points from data analysis and present actionable insights for decision-making with relevant figures and by clearly stating the scope of the action.
+        # Backstory = You are an experienced business consultant with a strong foundation in data-driven 
+        #             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.
+        # Task = Based on the dataframe analysis and the internal documents insights, summarize briefly the analysis and provide clear,
+        #        actionable business insights and recommendations for decision-making with figures and the targeted scope. The recommendations
+        #        must be explicits with figures and precised indicators and scope and justified regarding the data and the internal documents."""
+        # )
 
-        st.subheader("Internal Document Researcher")
-        st.text(
-            """
-        Role = Internal Document Researcher
-        Goal= Extract insights and goals with targeted indicators and countries from internal documents to support strategic planning and decision-making.
-        Backstory = You are a meticulous analyst with expertise in reviewing internal documents, 
-                    identifying key insights with relevant figures and aligning them with organizational objectives.
-        Task = Extract key insights and goals from internal documents that align with company objectives and
-               strategic planning for the upcoming year."""
-        )
+        # st.subheader("Internal Document Researcher")
+        # st.text(
+        #     """
+        # Role = Internal Document Researcher
+        # Goal= Extract insights and goals with targeted indicators and countries from internal documents to support strategic planning and decision-making.
+        # Backstory = You are a meticulous analyst with expertise in reviewing internal documents, 
+        #             identifying key insights with relevant figures and aligning them with organizational objectives.
+        # Task = Extract key insights and goals from internal documents that align with company objectives and
+        #        strategic planning for the upcoming year."""
+        # )
 
     if st.button("Run Analysis"):
         # Placeholder for stopwatch
