@@ -695,7 +695,7 @@ def run_crewai_app():
         #     # st.image("my_img.png")
         #     pass
 
-        for agent_name,task_number in zip(agents,taks):
+        for agent_name,task_number in zip(product_crew.agents,product_crew.tasks):
             st.subheader(agent_name.role)
             st.text(
                 f"""
