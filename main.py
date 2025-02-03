@@ -547,11 +547,7 @@ def run_crewai_app():
                 doc.page_content.replace("\n", " ") for doc in docs
             ]  # remove \n
             unique_retrieval = list(set(removed_n))  # remove duplicates documents
-            retrieved_context = ""
-            for (
-                chunk
-            ) in unique_retrieval:  # concatenate documents into a single str paragraph
-                retrieved_context += chunk + "\n"
+            retrieved_context = "\n".join(unique_retrieval)
             return retrieved_context
             
         @tool
@@ -583,96 +579,142 @@ def run_crewai_app():
             )
             return response['output']
 
-        # Define Senior Data Analyst Agent
+        # Agent 1: Data Analysis Expert
         senior_data_analyst = Agent(
             role="Senior Data Analyst",
-            goal=f"Analyze the dataframe and provide clear, actionable key points.",
-            backstory="""You are a senior data analyst with a strong background 
-                            in applied mathematics and computer science, skilled in deriving insights 
-                            from complex datasets.""",
+            goal=(
+                "Conduct a comprehensive analysis of the provided dataframe to identify key trends, anomalies, and statistical insights. "
+                "Support each insight with precise data metrics and highlight any outliers that may suggest actionable issues."
+            ),
+            backstory=(
+                "You are a data expert with a strong background in applied mathematics and computer science, "
+                "adept at transforming raw data into actionable, quantitative insights."
+            ),
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-
-        # Define Senior Business Advisor Agent
-        senior_business_advisor = Agent(
-            role="Senior Business Advisor",
-            goal="Summarize key points from data analysis and present actionable insights for decision-making with relevant figures and by clearly stating the scope of the action and the reason why the company should focus on this scope.",
-            backstory="""You are an experienced business consultant with a strong foundation in data-driven 
-                            decision-making, skilled at distilling complex analyses into clear, impactful recommendations.""",
-            verbose=True,
-            allow_delegation=True,
-            llm=llm,
-            function_calling_llm=function_calling_llm,
-        )
-
-        # Define Macroeconomics Researcher Agent
-        macroeconomics_researcher = Agent(
-            role="Macroeconomics Researcher",
-            goal="Research macroeconomic insights to inform and optimize company budget planning for the upcoming year.",
-            backstory="""You are a skilled economist with expertise in macroeconomic trends, forecasting, 
-                            and their implications for corporate financial strategies.""",
-            verbose=True,
-            allow_delegation=True,
-            llm=llm,
-            tool=[duckduckgo_search],
-            function_calling_llm=function_calling_llm,
-        )
-
-        # Define Internal Document Researcher Agent
+    
+        # Agent 2: Internal Document Strategist
         internal_document_researcher = Agent(
             role="Internal Document Researcher",
-            goal="Extract insights and goals with targeted indicators and countries from internal documents to support strategic planning and decision-making",
-            backstory="""You are a meticulous analyst with expertise in reviewing internal documents, 
-                            identifying key insights with relevant figures and aligning them with organizational objectives.""",
+            goal=(
+                "Extract and synthesize strategic insights from internal documents. "
+                "Focus on identifying key objectives, targeted indicators, and performance benchmarks that align with the company’s strategic priorities."
+            ),
+            backstory=(
+                "You are a meticulous analyst skilled in reviewing internal documents to extract insights that inform high-level strategic decisions."
+            ),
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-
-        # Define Task 1: Data Analysis
+    
+        # # Agent 3: Macroeconomic Analyst
+        # macroeconomics_researcher = Agent(
+        #     role="Macroeconomics Researcher",
+        #     goal=(
+        #         "Analyze current macroeconomic trends and forecasts, then evaluate their potential impact on the company’s financial planning and market positioning. "
+        #         "Provide clear insights on external economic risks and opportunities."
+        #     ),
+        #     backstory=(
+        #         "You are an expert economist with deep knowledge of global market trends and economic indicators. "
+        #         "Your analysis helps bridge external economic conditions with internal business strategies."
+        #     ),
+        #     verbose=True,
+        #     allow_delegation=True,
+        #     tools=[duckduckgo_search],
+        #     llm=llm,
+        #     function_calling_llm=function_calling_llm,
+        # )
+    
+        # Agent 4: Strategic Business Advisor
+        senior_business_advisor = Agent(
+            role="Senior Business Advisor",
+            goal=(
+                "Integrate the findings from the data analysis, and internal document insights to develop a set of actionable business recommendations. "
+                "For each recommendation, provide supporting data, clear next steps, and expected outcomes."
+            ),
+            backstory=(
+                "You are a seasoned business consultant with extensive experience in data-driven decision-making. "
+                "Your expertise lies in translating complex analytical results into clear, actionable business strategies."
+            ),
+            verbose=True,
+            allow_delegation=True,
+            # This agent may call upon both the retriever and dataframe tools for cross-referencing information.
+            tools=[retriever, dataframe_creator],
+            llm=llm,
+            function_calling_llm=function_calling_llm,
+        )
+    
+        # --------------------- Adjusted Task Definitions ---------------------
+    
+        # Task 1: Detailed Data Analysis
         task1 = Task(
-            description=f"Analyze the provided non indexed dataframe. {dataframe_enriched_prompt_input(cube_name=cube_name, view_name=view_name)}. Identify trends, anomalies, and key statistics. Provide actionable insights and key points for decision-makers.",
-            expected_output="Analysis of the dataframe with key points, trends, and actionable insights to prioritize, and emphasize on pain points",
+            description=(
+                "Perform an in-depth analysis of the dataframe. Identify significant trends, outliers, and statistical anomalies. "
+                "Support your findings with quantitative metrics and suggest any potential areas of concern or opportunity."
+            ),
+            expected_output=(
+                "A detailed report that includes major data trends, identified anomalies, key performance metrics, and preliminary insights."
+            ),
             agent=senior_data_analyst,
         )
-
-        # Define Task 2: Business Insights
+    
+        # Task 2: Extract Internal Document Insights
         task2 = Task(
-            description="Based on the dataframe analysis and the internal documents insights, summarize briefly the analysis and provide clear, actionable business insights and recommendations for decision-making with figures and the targeted scope such as target indicator and country. The recommendations must be explicits with figures and precised indicators and justified according to the data and the goals stated in internal documents and why is this scope is primarily targeted.",
-            expected_output="Business insights and actions recommendations based on the data analysis and the internal documents.",
-            agent=senior_business_advisor,
-        )
-
-        # Define Task 3: Macroeconomic Insights
-        task3 = Task(
-            description="Research relevant macroeconomic trends and insights to inform company budget planning for the upcoming year. Provide a report on economic forecasts and their potential impact on business operations.",
-            expected_output="Macroeconomic insights and recommendations to optimize the budget planning process.",
-            agent=macroeconomics_researcher,
-        )
-
-        # Define Task 4: Internal Document Insights
-        task4 = Task(
-            description="Extract key insights and goals with the targeted indicators and countries from internal documents that align with company objectives and strategic planning for the upcoming year. Focus your research on the scope that seems primary according to the Data Analysis",
-            expected_output="Insights and goals from internal documents relevant to strategic planning.",
+            description=(
+                "Review the internal documents to extract strategic insights. Focus on identifying key objectives, targeted indicators, and performance benchmarks. "
+                "Summarize these findings clearly and explain how they align with the company’s strategic goals."
+            ),
+            expected_output=(
+                "A concise summary of strategic insights from internal documents, highlighting targeted indicators, benchmarks, and alignment with company priorities."
+            ),
             agent=internal_document_researcher,
         )
-
-        task_values.append([task1.description,task4.description,task2.description])
-        
-        # Create and Run the Crew
+    
+        # # Task 3: Macroeconomic Analysis
+        # task3 = Task(
+        #     description=(
+        #         "Research current macroeconomic trends and forecasts relevant to the industry. "
+        #         "Analyze how these external factors could impact the company’s financial planning and operational strategy, detailing risks and opportunities."
+        #     ),
+        #     expected_output=(
+        #         "A comprehensive report outlining relevant macroeconomic trends, their potential impacts on the company, and suggestions for risk mitigation or opportunity leveraging."
+        #     ),
+        #     agent=macroeconomics_researcher,
+        # )
+    
+        # Task 4: Integrated Business Recommendations
+        task4 = Task(
+            description=(
+                "Based on the findings from the data analysis and internal document insights, "
+                "develop a comprehensive set of actionable business recommendations. "
+                "For each recommendation, provide supporting data, clear next steps, and expected outcomes."
+            ),
+            expected_output=(
+                "A structured final report that integrates all previous insights and presents clear, data-driven recommendations with detailed next steps."
+            ),
+            agent=senior_business_advisor,
+        )
+    
+        # --------------------- Assemble and Execute the Crew ---------------------
+    
+        # By ordering the tasks sequentially—starting with data analysis and internal insights,
+        # followed by macroeconomic research, and culminating in integrated recommendations—
+        # you ensure that each step builds on the previous outputs.
         product_crew = Crew(
             agents=[
                 senior_data_analyst,
                 internal_document_researcher,
+                # macroeconomics_researcher,
                 senior_business_advisor,
             ],
-            tasks=[task1, task4, task2],
+            tasks=[task1, task2, task4],
             verbose=True,
             process=Process.sequential,
         )
