@@ -685,9 +685,8 @@ def run_crewai_app():
             verbose=True,
             process=Process.sequential,
         )
-        crew_result = product_crew.kickoff()
-        return crew_result
-
+        return product_crew
+    product_crew = create_crewai_setup(cube_name, view_name)
 
     with st.expander("About the Team:"):
         # left_co, cent_co, last_co = st.columns(3)
@@ -751,7 +750,7 @@ def run_crewai_app():
         ):
             sys.stdout = StreamToExpander(st)
             with st.spinner("Generating Results"):
-                crew_result = create_crewai_setup(cube_name, view_name)
+                crew_result = product_crew.kickoff()
 
         # Stop the stopwatch
         end_time = time.time()
