@@ -618,7 +618,7 @@ def run_crewai_app():
         senior_business_advisor = Agent(
             role="Senior Business Advisor",
             goal=(
-                "Integrate the findings from the data analysis and internal document insights to produce a prioritized list of concrete, actionable recommendations, and you should only stick with the indicators stated in the dataframe "
+                "Integrate the findings from the data analysis and internal document insights to produce a prioritized list of concrete, actionable recommendations, and you should only make recommendation with the Indicateurs_Activité stated in the dataframe "
                 "Each recommendation must include precise figures (for example, specifying the percentage or amount by which specific costs should be adjusted) "
                 "and be fully supported by data and documented evidence. Provide clear next steps and explicit justification for each action item."
             ),
