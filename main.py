@@ -628,7 +628,7 @@ def run_crewai_app():
             ),
             verbose=True,
             allow_delegation=True,
-            tools=[retriever, dataframe_creator],
+            # tools=[retriever, dataframe_creator],
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
