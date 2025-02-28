@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import ast
 import time
 import re
 import configparser
@@ -208,7 +209,7 @@ parameters = {
 
 parameters_llama = {
     "decoding_method": "sample",
-    "max_new_tokens": 4000,
+    "max_new_tokens": 5000,
     "temperature": 0.7,
     "top_k": 50,
     "top_p": 1,
@@ -529,9 +530,9 @@ def main():
         )
 
         insight_task = Task(
-            description="Synthesize quantitative and qualitative insights into actionable recommendations, focusing on strengths and weaknesses, targeting only indicators in all_indicators, and prioritizing affected countries in alignment with strategic objectives.",
+            description=f"Synthesize quantitative and qualitative insights into actionable recommendations, focusing on strengths and weaknesses, targeting only indicators in {all_indicators}, and prioritizing affected countries in alignment with strategic objectives.",
             agent=InsightSynthesizer,
-            expected_output="A list of data-backed business recommendations integrating both datasets, targeting relevant indicators and key countries, and addressing identified strengths and weaknesses.",
+            expected_output="A list of data-backed business recommendations integrating both datasets, targeting relevant indicators and key countries, and addressing identified strengths and weaknesses. The output should keep the exact syntax of the indicators from the indicators list",
         )
 
         strategy_task = Task(
@@ -715,7 +716,7 @@ def main():
                                 Extrait uniquement les indicateurs, le pourcentage d'augmentation ou de diminution, les pays et les mois associés qui sont recommandés de modifier dans ce texte. 
 
                                 ### Règles strictes d'extraction :
-                                1. **N’extrais un indicateur que s’il est exactement dans la liste fournie (`all_indicators`)**. Si un indicateur n'est pas dans la liste, ignore-le.
+                                1. **N’extrais un indicateur que s’il est exactement dans la liste d'indicateurs fournie **. Si un indicateur n'est pas dans la liste, ignore-le.
                                 2. **Conserve l’intitulé exact** des indicateurs sans les modifier ni les accorder.
                                 3. **Si aucun indicateur valide n'est trouvé, ne retourne rien.**
                                 4. **Exclusion de l'année** : Seuls les mois doivent être extraits, pas l'année.
@@ -725,24 +726,24 @@ def main():
                                 - Si plusieurs mois ou pays sont concernés pour un même indicateur, tous doivent être extraits.
 
                                 Texte: L'analyse des informations clées du contenu du tableau montre que les pays ont des tendances différentes en ce qui concerne leurs ventes. Certains pays comme la Finlande et l'Irlande ont des ventes élevées tandis que d'autres comme le Royaume-Uni et les Pays-Bas ont des ventes plus faibles. Les deux recommandations d'action les plus pertinentes pour augmenter les performances de votre entreprise sont :• Augmenter Campagne Marketing de 20% en Mars et en Juin 2024 pour améliorer la visibilité de vos produits et services sur les marchés internationaux, en particulier en Finlande et en Irlande où les ventes sont élevées.• Réduire Couts des ventes de 12%  à partir de Octobre en optimisant les processus logistiques et en renégociant les contrats avec les fournisseurs, notamment en Espagne et au Portugal où les coûts des ventes sont élevés.
-                                Indicateurs trouvés: > Campagne Marketing;;20;;Finlande;;Mars
-                                > Campagne Marketing;;20;;Finlande;;Juin
-                                > Coûts des ventes;;-12;;Espagne;;Octobre
-                                > Coûts des ventes;;-12;;Espagne;;Novembre
-                                > Coûts des ventes;;-12;;Espagne;;Décembre                                
+                                Indicateurs trouvés: > {{'indicator':'Campagne Marketing','percent':'20','country':Finlande','mois':'Mars'}}
+                                > {{'indicator':'Campagne Marketing','percent':'20','country':Finlande','mois':'Juin'}}
+                                > {{'indicator':'Coûts des ventes','percent':'-12','country':Espagne','mois':'Octobre'}}
+                                > {{'indicator':'Coûts des ventes','percent':'-12','country':Espagne','mois':'Novembre'}}
+                                > {{'indicator':'Coûts des ventes','percent':'-12','country':Espagne','mois':'Décembre'}}
 
                                 Texte: Analyse des informations clées du contenu du tableau :Le tableau présente les données de ventes mensuelles pour différents pays européens. Les valeurs sont exprimées en unités monétaires (probablement euros). Les données montrent une grande variabilité entre les pays et les mois.Les pays avec les ventes les plus élevées sont l'Irlande, l'Allemagne et la Finlande. Les pays avec les ventes les plus faibles sont la Belgique et le Royaume-Uni.Il est important de noter que certaines valeurs sont négatives, ce qui peut indiquer des pertes ou des coûts associés aux ventes.Recommandations d'action :* Augmenter le Programme Fidélité de 38% du Royaume-Uni et de la Belgique pour améliorer la rétention des clients et encourager les achats répétés.* Réduire les Couts Commerciaux de 17% en Espagne et en Finlande de Janvier à Avril pour améliorer les Recettes Commerciales, la marge bénéficiaire et la compétitivité. 
-                                Indicateurs trouvés: > Programme Fidélité;;38;;Royaume-Uni
-                                > Programme Fidélité;;38;;Belgique
-                                > Coûts Commerciaux;;-17;;Espagne;;Janvier
-                                > Coûts Commerciaux;;-17;;Espagne;;Février
-                                > Coûts Commerciaux;;-17;;Espagne;;Mars
-                                > Coûts Commerciaux;;-17;;Espagne;;Avril
-                                > Coûts Commerciaux;;-17;;Finlande;;Janvier
-                                > Coûts Commerciaux;;-17;;Finlande;;Février
-                                > Coûts Commerciaux;;-17;;Finlande;;Mars
-                                > Coûts Commerciaux;;-17;;Finlande;;Avril
-                                                                
+                                Indicateurs trouvés: > {{'indicator':'Programme Fidélité','percent':'38','Pays':Royaume-Uni'}}
+                                > {{'indicator':'Programme Fidélité','percent':'38','country':Royaume-Uni'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Janvier'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Février'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Mars'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Avril'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Janvier'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Février'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Mars'}}
+                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Avril'}}
+                                
                                 Texte: {crew_result}
                                 Indicateurs trouvés: """
 
@@ -757,29 +758,37 @@ def main():
     print("\nfound_percent\n")
     print(found_percent)
 
-    indicator_percent_country = []
-    for association in found_percent:
-        if len(association.split(";;")) == 3:
-            indicator, percent, pays = association.split(";;")
-            if tm1.elements.exists(
-                dimension_name="Pays", hierarchy_name="Pays", element_name=pays
-            ):
-                indicator_percent_country.append(
-                    {"indicator": indicator, "percent": percent, "country": pays}
-                )
-        if len(association.split(";;")) == 4:
-            indicator, percent, pays, mois = association.split(";;")
-            if tm1.elements.exists(
-                dimension_name="Pays", hierarchy_name="Pays", element_name=pays
-            ):
-                indicator_percent_country.append(
-                    {
-                        "indicator": indicator,
-                        "percent": percent,
-                        "country": pays,
-                        "mois": mois,
-                    }
-                )
+    indicator_percent_country = [ast.literal_eval(val) for val in found_percent]
+    # for association in found_percent:
+    #     if len(association.split(";;")) == 2:
+    #         indicator, percent, pays = association.split(";;")
+    #         if tm1.elements.exists(
+    #             dimension_name="Pays", hierarchy_name="Pays", element_name=pays
+    #         ):
+    #             indicator_percent_country.append(
+    #                 {"indicator": indicator, "percent": percent, "country": pays}
+    #             )
+    #     if len(association.split(";;")) == 3:
+    #         indicator, percent, pays = association.split(";;")
+    #         if tm1.elements.exists(
+    #             dimension_name="Pays", hierarchy_name="Pays", element_name=pays
+    #         ):
+    #             indicator_percent_country.append(
+    #                 {"indicator": indicator, "percent": percent, "country": pays}
+    #             )
+    #     if len(association.split(";;")) == 4:
+    #         indicator, percent, pays, mois = association.split(";;")
+    #         if tm1.elements.exists(
+    #             dimension_name="Pays", hierarchy_name="Pays", element_name=pays
+    #         ):
+    #             indicator_percent_country.append(
+    #                 {
+    #                     "indicator": indicator,
+    #                     "percent": percent,
+    #                     "country": pays,
+    #                     "mois": mois,
+    #                 }
+    #             )
 
     print("\nindicator_percent_country\n")
     print(indicator_percent_country)
@@ -829,7 +838,15 @@ def main():
         pays_trouves = list(
             set([cell["country"] for cell in indicator_percent_country])
         )
-        mois_trouves = list(set([cell["mois"] for cell in indicator_percent_country]))
+        mois_trouves = list(
+            set(
+                [
+                    cell["mois"]
+                    for cell in indicator_percent_country
+                    if "mois" in cell.keys()
+                ]
+            )
+        )
         pourcentages_trouves = list(
             set([cell["percent"] for cell in indicator_percent_country])
         )
@@ -856,6 +873,21 @@ def main():
             cube_name=output_cube_name,
             element_tuple=["AgenticAnalysis", "Results"],
         )
+        year = "2024"
+        all_months = {
+            "janvier": "01",
+            "février": "02",
+            "mars": "03",
+            "avril": "04",
+            "mai": "05",
+            "juin": "06",
+            "juillet": "07",
+            "août": "08",
+            "septembre": "09",
+            "octobre": "10",
+            "novembre": "11",
+            "décembre": "12",
+        }
 
         if 1 == 1:
             # tm1.cells.write_value(
@@ -891,32 +923,52 @@ def main():
             #     element_tuple=["AgenticAnalysis", "CurrentIndicatorsPickList", "Value"],
             # )
             for target in indicator_percent_country:
-                percent, target_country, target_indicator, mois = (
-                    target["percent"],
-                    target["country"],
-                    target["indicator"],
-                    target["mois"],
-                )
-                # print(percent, target_country, target_indicator)
-                for period in tm1.subsets.get_element_names(
-                    "Period", "Period", "2024_mois"
-                ):  # à généraliser pour récupérer le subset de period d'une vue donnée
-                    old_value = tm1.cells.get_value(
-                        cube_name=cube_name,
-                        elements=f"BUDG_VC;;{period};;{target_country};;{target_indicator}",
-                        element_separator=";;",
-                    )
+                if "percent" in target.keys():
+                    percent = target["percent"]
                     new_value = int(percent)
-                    tm1.cells.write_value(
-                        new_value,
-                        cube_name=cube_name,
-                        element_tuple=[
-                            "BUDG_VC_AJUST%",
-                            period,
-                            target_country,
-                            target_indicator,
-                        ],
-                    )
+                else:
+                    continue
+                if "country" in target.keys():
+                    target_country = target["country"]
+                else:
+                    continue
+                if "indicator" in target.keys():
+                    target_indicator = target["indicator"]
+                else:
+                    continue
+                if "mois" in target.keys():
+                    mois = target["mois"]
+                    if str(mois).lower() in all_months.keys():
+                        tm1.cells.write_value(
+                            new_value,
+                            cube_name=cube_name,
+                            element_tuple=[
+                                "BUDG_VC_AJUST%",
+                                year + "." + all_months[mois],
+                                target_country,
+                                target_indicator,
+                            ],
+                        )
+                else:
+                    for period in tm1.subsets.get_element_names(
+                        "Period", "Period", year + "_mois"
+                    ):  # à généraliser pour récupérer le subset de period d'une vue donnée
+                        old_value = tm1.cells.get_value(
+                            cube_name=cube_name,
+                            elements=f"BUDG_VC;;{period};;{target_country};;{target_indicator}",
+                            element_separator=";;",
+                        )
+                        tm1.cells.write_value(
+                            new_value,
+                            cube_name=cube_name,
+                            element_tuple=[
+                                "BUDG_VC_AJUST%",
+                                period,
+                                target_country,
+                                target_indicator,
+                            ],
+                        )
+                # print(percent, target_country, target_indicator)
 
 
 if __name__ == "__main__":
