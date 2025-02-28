@@ -1,78 +1,87 @@
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-
-import time
-import pandas as pd
-import mdpd
-import streamlit as st
-from crewai import Agent, Task, Crew, Process, LLM
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain.agents import Tool, AgentType, AgentExecutor, create_react_agent
-from langchain_experimental.tools.python.tool import PythonREPLTool
-from langchain_core.runnables import chain
-from ibm_watsonx_ai.foundation_models import Model
-from ibm_watsonx_ai import Credentials
-
-# from langchain.llms.base import LLM
-from typing import Any, List, Mapping, Optional
-from crewai.tools import tool
-# from crewai_tools import CSVSearchTool
-from pydantic import BaseModel
-import docling
-
-from docling.backend.msword_backend import MsWordDocumentBackend
-from docling.datamodel.base_models import InputFormat
-from docling.datamodel.document import (ConversionResult, InputDocument, SectionHeaderItem)
-from docling.document_converter import DocumentConverter
-
-from typing import Iterator
-
-from langchain_core.document_loaders import BaseLoader
-from langchain_core.documents import Document as LCDocument
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-import json
 import os
+import sys
+import json
+import time
 import re
 import configparser
-
 from pathlib import Path
+from typing import Any, List, Mapping, Optional, Iterator
 
-from TM1py.Services import TM1Service
-from TM1py.Utils.Utils import build_pandas_dataframe_from_cellset
-from TM1py.Utils.Utils import build_cellset_from_pandas_dataframe
-from langchain_community.vectorstores import Chroma
-from langchain_core.documents import Document
-from langchain_community.document_loaders import Docx2txtLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain_ibm import WatsonxEmbeddings
-from langchain_ibm import WatsonxLLM
-from langchain_ibm import ChatWatsonx
-from ibm_watsonx_ai.metanames import EmbedTextParamsMetaNames as EmbedParams
-from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
-from ibm_watsonx_ai.foundation_models.utils.enums import EmbeddingTypes
-from ibm_watsonx_ai.foundation_models.utils.enums import ModelTypes
-from ibm_watsonx_ai.foundation_models.utils.enums import DecodingMethods
-from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain_experimental.agents.agent_toolkits import create_csv_agent
-from streamlit_file_browser import st_file_browser
+# # Importation des bibliothèques liées à SQLite
+# __import__("pysqlite3")
+# sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 
-# from crewai import LLM
+# Gestion des variables d'environnement
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Définition des constantes pour les variables d'environnement
 WATSONX_APIKEY = os.getenv("WATSONX_APIKEY", "")
 WATSONX_PROJECT_ID = os.getenv("PROJECT_ID", "")
+WATSONX_URL = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com/")
 
-os.environ["WATSONX_URL"] = "https://us-south.ml.cloud.ibm.com/"
+os.environ["WATSONX_URL"] = WATSONX_URL
 os.environ["WATSONX_APIKEY"] = WATSONX_APIKEY
 os.environ["WATSONX_PROJECT_ID"] = WATSONX_PROJECT_ID
 
-WATSONX_URL = os.getenv("WATSONX_URL", "")
+# Importation des bibliothèques liées à IBM Watsonx
+from ibm_watsonx_ai import Credentials
+from ibm_watsonx_ai.foundation_models import Model
+from ibm_watsonx_ai.metanames import (
+    EmbedTextParamsMetaNames as EmbedParams,
+    GenTextParamsMetaNames as GenParams,
+)
+from ibm_watsonx_ai.foundation_models.utils.enums import (
+    EmbeddingTypes,
+    ModelTypes,
+    DecodingMethods,
+)
 
 credentials = Credentials(url=WATSONX_URL, api_key=WATSONX_APIKEY)
+
+# Bibliothèques liées à Streamlit
+import streamlit as st
+from streamlit_file_browser import st_file_browser
+
+# Bibliothèques de traitement de données
+import pandas as pd
+import mdpd
+
+# Bibliothèques de traitement de documents
+import docling
+from docling.backend.msword_backend import MsWordDocumentBackend
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.document import (
+    ConversionResult,
+    InputDocument,
+    SectionHeaderItem,
+)
+from docling.document_converter import DocumentConverter
+
+# Bibliothèques liées à Langchain et CrewAI
+from crewai import Agent, Task, Crew, Process, LLM
+from crewai.tools import tool
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain.agents import Tool, AgentType, AgentExecutor, create_react_agent
+from langchain_experimental.tools.python.tool import PythonREPLTool
+from langchain_core.runnables import chain
+from langchain_core.document_loaders import BaseLoader
+from langchain_core.documents import Document as LCDocument
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_community.document_loaders import Docx2txtLoader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_ibm import WatsonxEmbeddings, WatsonxLLM, ChatWatsonx
+from langchain_experimental.agents import create_pandas_dataframe_agent
+from langchain_experimental.agents.agent_toolkits import create_csv_agent
+
+# Bibliothèques liées à TM1py (IBM Planning Analytics)
+from TM1py.Services import TM1Service
+from TM1py.Utils.Utils import (
+    build_pandas_dataframe_from_cellset,
+    build_cellset_from_pandas_dataframe,
+)
 
 
 def get_credentials():
@@ -81,8 +90,8 @@ def get_credentials():
         "apikey": os.getenv("WATSONX_APIKEY", ""),
     }
 
-class DoclingPDFLoader(BaseLoader):
 
+class DoclingPDFLoader(BaseLoader):
     def __init__(self, file_path: str | list[str]) -> None:
         self._file_paths = file_path if isinstance(file_path, list) else [file_path]
         self._converter = DocumentConverter()
@@ -93,154 +102,87 @@ class DoclingPDFLoader(BaseLoader):
             text = dl_doc.export_to_markdown()
             yield LCDocument(page_content=text)
 
+
 def create_documents(path):
-    # # Loading files
     loader = DoclingPDFLoader(file_path=path)
     file_name = loader._converter.convert(path).document.name
     text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200,
+        chunk_size=1000,
+        chunk_overlap=200,
     )
     docs = loader.load()
     docs[0].metadata = {"filename": file_name}
-    splits = text_splitter.split_documents(docs)
-    return splits
+    return text_splitter.split_documents(docs)
 
 
-# embedding
 embed_params = {
     EmbedParams.TRUNCATE_INPUT_TOKENS: 512,
     EmbedParams.RETURN_OPTIONS: {"input_text": True},
 }
 
 embeddings = WatsonxEmbeddings(
-    model_id="intfloat/multilingual-e5-large", #EmbeddingTypes.IBM_SLATE_125M_ENG.value,
-    url=get_credentials()["url"],
-    apikey=get_credentials()["apikey"],
-    project_id=WATSONX_PROJECT_ID,
+    model_id="intfloat/multilingual-e5-large",
+    url=os.getenv("WATSONX_URL", ""),
+    apikey=os.getenv("WATSONX_APIKEY", ""),
+    project_id=os.getenv("WATSONX_PROJECT_ID", ""),
     params=embed_params,
 )
+
 
 def create_vectorstore(path):
     texts = create_documents(path)
     return Chroma.from_documents(texts, embeddings)
 
-docsearch = None
-doc_folder = "Documents RAG"
 
-def update_doc_folder(folder): 
+doc_folder = "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/PAAgenticAnalysis/agentic_analysis/Documents RAG"
+
+
+def update_doc_folder(folder):
     folder_list_dir = os.listdir(folder)
-    folder_list_dir.remove(".gitignore")
+    folder_list_dir = [f for f in folder_list_dir if f != ".gitignore"]
     return folder_list_dir
 
-files_name = update_doc_folder(doc_folder)
-
-if files_name:
-    file_path = os.path.join(f'{doc_folder}/{files_name[0]}')
-    docsearch = create_vectorstore(file_path)
 
 def add_documents(vectorbase, path):
     new_documents = create_documents(path)
     vectorbase.add_documents(new_documents)
 
-# import streamlit as st
-# import requests
-# import base64
 
-# # GitHub configuration
-# GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Store securely, e.g., in environment variables
-# GITHUB_USERNAME = "ETA-DT"
-# REPO_NAME = "agentic_analysis"
-# BRANCH_NAME = "main"  # Or the branch you want to push to
-
-# # GitHub API URL template
-# GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
-
-# # Streamlit file uploader
-# uploaded_file = st.file_uploader("Upload a file to GitHub", type=["txt", "csv", "png", "jpg", "pdf","docx"])
-
-# if uploaded_file is not None:
-#     file_content = uploaded_file.getvalue()
-#     file_name = uploaded_file.name
-
-#     # Encode the file content to base64 (required by GitHub API)
-#     encoded_content = base64.b64encode(file_content).decode("utf-8")
-
-#     # API payload
-#     payload = {
-#         "message": f"Add {file_name}",
-#         "content": encoded_content,
-#         "branch": BRANCH_NAME
-#     }
-
-#     # Make the API request
-#     upload_url = f"{GITHUB_API_URL}/{file_name}"  # File will be saved at the root of the repository
-#     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
-
-#     response = requests.put(upload_url, headers=headers, json=payload)
-
-#     # Handle the API response
-#     if response.status_code == 201:
-#         st.success(f"File '{file_name}' successfully uploaded to GitHub!")
-#     elif response.status_code == 422:  # Unprocessable Entity, file may already exist
-#         st.error(f"File '{file_name}' already exists in the repository.")
-#     else:
-#         st.error(f"An error occurred: {response.json()}")
+docsearch = None
+files_name = update_doc_folder(doc_folder)
 
 document_dataframe = []
 
-st.set_page_config(layout="wide")
-with st.sidebar:
-    uploaded_files = st.file_uploader('Choose a Doc File',type="docx", accept_multiple_files=True)
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            if uploaded_file not in files_name:
-                with open(os.path.join("Documents RAG",uploaded_file.name),"wb") as f: 
-                    f.write(uploaded_file.getbuffer())         
-                files_name = update_doc_folder(doc_folder)
-            if not(docsearch):
-                docsearch = create_vectorstore(os.path.join(f'{doc_folder}/{uploaded_file.name}'))
-        document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
-        st.success("Saved File")
-    
-        st.sidebar.header('Directory')
-        # event = st_file_browser(os.path.join("Documents RAG"),
-        # key="deep",
-        # use_static_file_server=False,
-        # show_choose_file=False,
-        # show_delete_file=True,
-        # show_download_file=False,
-        # show_new_folder=False,
-        # show_upload_file=False,
-        # )
-    
-    if document_dataframe:
-        for filename in files_name:
-            if filename not in document_dataframe:
-                add_documents(
-                    docsearch,
-                    os.path.join(os.path.join(f'{doc_folder}/{filename}')),
-                    )
-            document_dataframe = list(set([source['filename'] for source in [elem for elem in docsearch.get()['metadatas'] if elem]]))
-            # st.write(filename)
+if files_name:
+    file_path = os.path.join(doc_folder, files_name[0])
+    docsearch = create_vectorstore(file_path)
 
-    st.dataframe(pd.DataFrame({"Documents":document_dataframe}), hide_index = True)
+for filename in files_name:
+    if docsearch:
+        if filename not in [
+            doc["filename"] for doc in docsearch.get()["metadatas"] if doc
+        ]:
+            add_documents(docsearch, os.path.join(doc_folder, filename))
 
-    complete_loading = st.button("Done")
+document_dataframe = list(
+    set([doc["filename"] for doc in docsearch.get()["metadatas"] if doc])
+)
 
-
+pd.DataFrame({"Documents": document_dataframe}).to_csv("document_list.csv", index=False)
 
 # to keep track of tasks performed by agents
 task_values = []
 
-# # define current directory
-# def set_current_directory():
-#     abspath = os.path.abspath()  # file absolute path
-#     directory = os.path.dirname(abspath)  # current file parent directory
-#     os.chdir(directory)
-#     return directory
 
-# CURRENT_DIRECTORY = set_current_directory()
+# define current directory
+def set_current_directory():
+    abspath = os.path.abspath(__file__)  # file absolute path
+    directory = os.path.dirname(abspath)  # current file parent directory
+    os.chdir(directory)
+    return directory
+
+
+CURRENT_DIRECTORY = set_current_directory()
 config = configparser.ConfigParser()
 config.read("config.ini")
 
@@ -257,7 +199,7 @@ model_id_mistral = "mistralai/mixtral-8x7b-instruct-v01"
 
 parameters = {
     "decoding_method": "sample",
-    "max_new_tokens": 2000,
+    "max_new_tokens": 3000,
     "temperature": 0.1,
     "top_k": 50,
     "top_p": 1,
@@ -318,95 +260,26 @@ llm = LLM(
 )
 
 
-# display the console processing on streamlit UI
-class StreamToExpander:
-    def __init__(self, expander):
-        self.expander = expander
-        self.buffer = []
-        self.colors = ["red", "green", "blue", "orange"]  # Define a list of colors
-        self.color_index = 0  # Initialize color index
-
-    def write(self, data):
-        # Filter out ANSI escape codes using a regular expression
-        cleaned_data = re.sub(r"\x1B\[[0-9;]*[mK]", "", data)
-
-        # Check if the data contains 'task' information
-        task_match_object = re.search(
-            r"\"task\"\s*:\s*\"(.*?)\"", cleaned_data, re.IGNORECASE
-        )
-        task_match_input = re.search(
-            r"task\s*:\s*([^\n]*)", cleaned_data, re.IGNORECASE
-        )
-        task_value = None
-        if task_match_object:
-            task_value = task_match_object.group(1)
-        elif task_match_input:
-            task_value = task_match_input.group(1).strip()
-
-        if task_value:
-            st.toast(":robot_face: " + task_value)
-
-        # Check if the text contains the specified phrase and apply color
-        if "Entering new CrewAgentExecutor chain" in cleaned_data:
-            # Apply different color and switch color index
-            self.color_index = (self.color_index + 1) % len(
-                self.colors
-            )  # Increment color index and wrap around if necessary
-
-            cleaned_data = cleaned_data.replace(
-                "Entering new CrewAgentExecutor chain",
-                f":{self.colors[self.color_index]}[Entering new CrewAgentExecutor chain]",
-            )
-
-        if "Senior Data Analyst" in cleaned_data:
-            # Apply different color
-            cleaned_data = cleaned_data.replace(
-                "Senior Data Analyst",
-                f":{self.colors[self.color_index]}[Senior Data Analyst]",
-            )
-        if "Senior Business Advisor" in cleaned_data:
-            cleaned_data = cleaned_data.replace(
-                "Senior Business Advisor",
-                f":{self.colors[self.color_index]}[Senior Business Advisor]",
-            )
-        if "Internal Document Researcher" in cleaned_data:
-            cleaned_data = cleaned_data.replace(
-                "Internal Document Researcher",
-                f":{self.colors[self.color_index]}[Internal Document Researcher]",
-            )
-        if "Finished chain." in cleaned_data:
-            cleaned_data = cleaned_data.replace(
-                "Finished chain.", f":{self.colors[self.color_index]}[Finished chain.]"
-            )
-
-        self.buffer.append(cleaned_data)
-        if "\n" in data:
-            self.expander.markdown("".join(self.buffer), unsafe_allow_html=True)
-            self.buffer = []
-
-
 # Streamlit interface
-def run_crewai_app():
-    st.title("Watsonx AI Agent for dataframe analysis")
-    cube_name = ""
-    view_name = ""
-
+def main():
+    output_cube_name = "TM1py_output"
     # définir et se connecter à l'instance tm1
     with TM1Service(**config["tango_core_model"]) as tm1:
 
-        cube_name = st.text_input("Enter the cube name to analyze.")
-        if cube_name == "":
-            st.stop()
-        else:
-            view_name = st.selectbox(
-                "Select the view name to analyze.",
-                tm1.cubes.views.get_all_names(cube_name=cube_name)[-1],
-                index=None,
-                placeholder="Click to select...",
-            )
-            if not view_name:
-                st.stop()
-        
+        cube_name = tm1.cells.get_value(
+            cube_name=output_cube_name,
+            elements=[
+                ("TM1py_Scripts", "AgenticAnalysis"),
+                ("TM1py_outputs", "NomCube"),
+            ],
+        )
+        view_name = tm1.cells.get_value(
+            cube_name=output_cube_name,
+            elements=[
+                ("TM1py_Scripts", "AgenticAnalysis"),
+                ("TM1py_outputs", "NomVue"),
+            ],
+        )
         # dimensions de la vue
         measure_dim = tm1.cubes.get_measure_dimension(cube_name=cube_name)
         country_dim = "Pays"
@@ -423,6 +296,12 @@ def run_crewai_app():
         period_alias = tm1.elements.get_attribute_of_elements(
             period_dim, period_dim, "French"
         )
+        countries = tm1.elements.get_elements_by_level(
+            country_dim, country_dim, level=0
+        )
+        all_indicators = tm1.elements.get_elements_by_level(
+            measure_dim, measure_dim, level=0
+        )  # liste de tous les indicateurs de la dimension indicateurs
 
     def round_2(number):
         """
@@ -499,10 +378,7 @@ def run_crewai_app():
         )
 
     current_dataframe = view_dataframe(cube_name, view_name)
-    
-    with st.expander("See Data"):
-        st.dataframe(current_dataframe, hide_index=True)
-    
+
     def dataframe_prompt_input(cube_name, view_name):
         dataframe = view_dataframe(cube_name, view_name)
         dataframe_md = dataframe.to_markdown()
@@ -519,7 +395,7 @@ def run_crewai_app():
         duckduckgo_search = DuckDuckGoSearchRun()
 
         @tool
-        def retriever(query: str) -> List[Document]:
+        def retriever(query: str) -> List[LCDocument]:
             """
             Retrieve relevant documents based on a given query.
 
@@ -549,7 +425,7 @@ def run_crewai_app():
             unique_retrieval = list(set(removed_n))  # remove duplicates documents
             retrieved_context = "\n".join(unique_retrieval)
             return retrieved_context
-            
+
         @tool
         def dataframe_creator(query: str, df=current_dataframe) -> str:
             """
@@ -565,212 +441,483 @@ def run_crewai_app():
             Returns:
                 str: The result of the query execution as a string.
             """
-            agent = create_pandas_dataframe_agent(pandas_llm,
-                                    df,
-                                    agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-                                    # suffix= "Always return a JSON dictionary that can be parsed into a data frame containing the requested information.",
-                                    verbose=True, 
-                                    allow_dangerous_code=True,
-                                    include_df_in_prompt=True,
-                                    number_of_head_rows=len(df)
-                                    )
+            agent = create_pandas_dataframe_agent(
+                pandas_llm,
+                df,
+                agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+                # suffix= "Always return a JSON dictionary that can be parsed into a data frame containing the requested information.",
+                verbose=True,
+                allow_dangerous_code=True,
+                include_df_in_prompt=True,
+                number_of_head_rows=len(df),
+            )
             response = agent.invoke(
                 query, handle_parsing_errors=True, return_intermediate_steps=False
             )
-            return response['output']
+            return response["output"]
 
-        # Agent 1: Data Analysis Expert
-        senior_data_analyst = Agent(
-            role="Senior Data Analyst",
-            goal=(
-                "Conduct a comprehensive analysis of the provided dataframe to identify key trends, anomalies, and statistical insights. "
-                "Support each insight with precise data metrics and highlight any outliers or cost inefficiencies that may suggest actionable issues."
-            ),
-            backstory=(
-                "You are a data expert with a strong background in applied mathematics and computer science, "
-                "adept at transforming raw data into actionable, quantitative insights."
-            ),
+        # Agents Definition
+
+        ## DataCore Analyst
+        DataCore = Agent(
+            role="DataCore Analyst",
+            backstory="A data scientist with expertise in statistical modeling and business intelligence.",
+            goal="Transform raw Planning Analytics data into clean, structured information ready for AI insights, identifying the most critical intersections for targeted recommendations.",
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-        
-        # Agent 2: Internal Document Strategist
-        internal_document_researcher = Agent(
-            role="Internal Document Researcher",
-            goal=(
-                "Extract and synthesize strategic insights from internal documents. "
-                "Focus on identifying key objectives, targeted indicators, and performance benchmarks that align with the company’s strategic priorities."
-            ),
-            backstory=(
-                "You are a meticulous analyst skilled in reviewing internal documents to extract insights that inform high-level strategic decisions."
-            ),
+
+        ## DocuMentor Analyst
+        DocuMentor = Agent(
+            role="DocuMentor Analyst",
+            backstory="An NLP expert skilled in extracting insights from internal business documents.",
+            goal="Analyze internal documents to identify trends, contextual insights, and strategic objectives.",
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-        
-        # Agent 4: Strategic Business Advisor (Final Output)
-        senior_business_advisor = Agent(
-            role="Senior Business Advisor",
-            goal=(
-                "Integrate the findings from the data analysis and internal document insights to produce a prioritized list of concrete, actionable recommendations, and you should only make recommendation with the Indicateurs_Activité stated in the dataframe "
-                "Each recommendation must include precise figures (for example, specifying the percentage or amount by which specific costs should be adjusted) "
-                "and be fully supported by data and documented evidence. Provide clear next steps and explicit justification for each action item."
-            ),
-            backstory=(
-                "You are a seasoned business consultant with extensive experience in data-driven decision-making. "
-                "Your expertise lies in translating complex analytical results into clear, prioritized, and actionable business strategies that include precise numeric adjustments."
-            ),
+
+        ## Insight Synthesizer
+        InsightSynthesizer = Agent(
+            role="Insight Synthesizer",
+            backstory="A strategist blending AI-driven analytics with business insights.",
+            goal="Merge quantitative trends and qualitative insights into actionable business recommendations, prioritizing key countries based on data analysis and aligning with internal objectives.",
             verbose=True,
-            allow_delegation=True,
-            # tools=[retriever, dataframe_creator],
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
-        
-        # --------------------- Adjusted Task Definitions ---------------------
-        
-        # Task 1: Detailed Data Analysis
-        task1 = Task(
-            description=(
-                "Perform an in-depth analysis of the dataframe. Identify significant trends, outliers, and cost inefficiencies. "
-                "Support your findings with quantitative metrics (including figures and percentages) and suggest potential areas of concern or opportunity."
-            ),
-            expected_output=(
-                "A detailed report that includes major data trends, identified anomalies, key performance metrics, and preliminary insights with supporting figures."
-            ),
-            agent=senior_data_analyst,
+
+        ## Strategy Navigator
+        StrategyNavigator = Agent(
+            role="Strategy Navigator",
+            backstory="A business strategist ensuring insights align with company goals and market trends.",
+            goal="Validate insights, identify strengths and weaknesses, and align findings with business strategy, ensuring focus on key countries and business-critical indicators.",
+            # tools=[ai_tool],
+            verbose=True,
+            llm=llm,
+            function_calling_llm=function_calling_llm,
         )
-        
-        # Task 2: Extract Internal Document Insights
-        task2 = Task(
-            description=(
-                "Review the internal documents to extract strategic insights. Focus on identifying key objectives, targeted indicators, and performance benchmarks. "
-                "Summarize these findings clearly and explain how they align with the company’s strategic goals."
-            ),
-            expected_output=(
-                "A concise summary of strategic insights from internal documents, highlighting targeted indicators, benchmarks, and alignment with company priorities."
-            ),
-            agent=internal_document_researcher,
+
+        # ## Tech Integrator
+        # TechIntegrator = Agent(
+        #     role="Tech Integrator",
+        #     backstory="A systems engineer ensuring seamless integration of AI and analytics into workflows.",
+        #     goal="Automate workflows, connect IBM Planning Analytics with AI models, and monitor performance.",
+        #     # tools=[api_tool],
+        #     verbose=True,
+        #     llm=llm,
+        #     function_calling_llm=function_calling_llm,
+        # )
+
+        # Task Definitions
+
+        data_task = Task(
+            description="Clean and analyze Planning Analytics data to extract trends, identify key strengths and weaknesses, and determine the most critical intersections for prioritization.",
+            agent=DataCore,
+            expected_output="A structured and cleaned DataFrame with key trends highlighted, including priority intersections and identified strengths and weaknesses.",
         )
-        
-        # Task 4: Integrated Business Recommendations as a List of Actionable Items
-        task4 = Task(
-            description=(
-                "Based on the findings from the data analysis and internal document insights, develop a prioritized list of concrete, actionable business recommendations. "
-                "Each recommendation must include the specific action (e.g., 'Increase production costs by 5% for the X division' or 'Reduce overhead expenses by $50,000 per quarter'), "
-                "the supporting data metrics and document evidence, clear next steps, and an explicit justification."
-            ),
-            expected_output=(
-                "A structured final report that presents a list of actionable recommendations. Each recommendation should include the recommended action, "
-                "specific figures or percentages, supporting data and document references, detailed next steps, and a clear justification."
-            ),
-            agent=senior_business_advisor,
+
+        doc_task = Task(
+            description="Analyze internal documents to extract relevant business insights and strategic objectives.",
+            agent=DocuMentor,
+            expected_output="A summary of key themes, contextual insights, and strategic goals from internal documents.",
         )
-        
-        # --------------------- Assemble and Execute the Crew ---------------------
-        
-        product_crew = Crew(
+
+        insight_task = Task(
+            description="Synthesize quantitative and qualitative insights into actionable recommendations, focusing on strengths and weaknesses, targeting only indicators in all_indicators, and prioritizing affected countries in alignment with strategic objectives.",
+            agent=InsightSynthesizer,
+            expected_output="A list of data-backed business recommendations integrating both datasets, targeting relevant indicators and key countries, and addressing identified strengths and weaknesses.",
+        )
+
+        strategy_task = Task(
+            description="Validate insights, prioritize strategic actions, and align them with business goals, focusing on strengths and weaknesses to meet internal objectives.",
+            agent=StrategyNavigator,
+            expected_output="A prioritized action plan aligning insights with business goals, focusing on defined indicators, critical country intersections, and strategies to strengthen weaknesses and leverage strengths.",
+        )
+
+        # tech_task = Task(
+        #     description="Ensure seamless technical integration between AI models and Planning Analytics data.",
+        #     agent=TechIntegrator,
+        #     expected_output="An automated workflow integrating Planning Analytics and AI-driven insights."
+        # )
+
+        # Crew Assembly
+        crew = Crew(
             agents=[
-                senior_data_analyst,
-                internal_document_researcher,
-                senior_business_advisor,
+                DataCore,
+                DocuMentor,
+                InsightSynthesizer,
+                StrategyNavigator,
+                # TechIntegrator,
             ],
-            tasks=[task1, task2, task4],
+            tasks=[
+                data_task,
+                doc_task,
+                insight_task,
+                strategy_task,
+                #    tech_task,
+            ],
             verbose=True,
             process=Process.sequential,
         )
-        return product_crew
-    product_crew = create_crewai_setup(cube_name, view_name)
 
-    with st.expander("About the Team:"):
-        # left_co, cent_co, last_co = st.columns(3)
-        # with cent_co:
-        #     # st.image("my_img.png")
-        #     pass
+        return crew
 
-        for agent_name,task_number in zip(product_crew.agents,product_crew.tasks):
-            st.subheader(agent_name.role)
-            st.text(
-                f"""
-            Role = {agent_name.role}
-            Goal = {agent_name.goal}
-            Backstory = {agent_name.backstory}
-            Task = {task_number.description}"""
+        # Run the Crew
+
+    crew = create_crewai_setup(cube_name, view_name)
+    crew_result = crew.kickoff()
+
+    tm1.cells.write_value(
+        crew_result,
+        cube_name="TM1py_output",
+        element_tuple=["AgenticAnalysis", "Results"],
+    )
+
+    model_id = "meta-llama/llama-3-1-70b-instruct"
+    extract_model_id = "mistralai/mixtral-8x7b-instruct-v01"
+
+    # Defining the model parameters
+
+    parameters = {
+        "decoding_method": "greedy",
+        "min_new_tokens": 20,
+        "max_new_tokens": 900,
+        "repetition_penalty": 1.1,
+        "stop_sequences": ["'''''''''", '"""', "```"],
+    }
+
+    extract_model_parameters = {
+        "decoding_method": "greedy",
+        "max_new_tokens": 500,
+        "min_new_tokens": 1,
+        "stop_sequences": ["\n\n"],
+        "repetition_penalty": 1,
+    }
+
+    project_id = config.get(
+        "Keys", "project_ID"
+    )  # replace with new watsonx.ai project_id
+
+    ## Defining the Model object
+
+    model = Model(
+        model_id=model_id,
+        params=parameters,
+        credentials=get_credentials(),
+        project_id=project_id,
+    )
+
+    extract_model = Model(
+        model_id=extract_model_id,
+        params=extract_model_parameters,
+        credentials=get_credentials(),
+        project_id=project_id,
+    )
+
+    def extract_indicators_from_text(text):
+        # Regex pour capturer les noms d'indicateurs après les puces
+        pattern = r">\s*(.*)"
+        found_indicators = re.findall(pattern, text)
+        return found_indicators
+
+    def match_indicators(found_indicators, reference_indicators):
+        # Comparer les indicateurs extraits avec ceux de la liste de référence
+        matched_indicators = [
+            indicator
+            for indicator in found_indicators
+            if indicator in reference_indicators
+        ]
+        return matched_indicators
+
+    # extract_prompt_input = f"""Voici une liste d'indicateurs:
+    #                         [Campagne Marketing, Programme Fidélité, Couts Commerciaux, Couts des ventes, Couts généraux, Ventes Carburant, Ventes de pièces détachées, Prestation atelier, Recettes commerciales, Recette passager, Couts Stock Biens, Frais de personnel (CD), Coûts des accidents du travail, Réparations, Indemnisation tiers, Frais de voyages (SO), Coût Bio carburant, Coût Gaz, Pneumatiques, Recettes commerciales- engagement contractuel, Revenu des activités de tourisme (occasionnel)]
+    #                         Extrais de manière exhaustive tous les indicateurs qui apparaissent dans ce texte. Si tu ne trouves pas d'indicateurs, ne retourne rien. Conserve exactement le nom des indicateurs de la liste.
+
+    #                         Texte: L'analyse des informations clées du contenu du tableau montre que les pays ont des tendances différentes en ce qui concerne leurs ventes. Certains pays comme la Finlande et l'Irlande ont des ventes élevées tandis que d'autres comme le Royaume-Uni et les Pays-Bas ont des ventes plus faibles.Les deux recommandations d'action les plus pertinentes pour augmenter les performances de votre entreprise sont :• Augmenter Campagne Marketing de 20% pour améliorer la visibilité de vos produits et services sur les marchés internationaux, en particulier en Finlande et en Irlande où les ventes sont élevées.• Réduire Couts des ventes de 15% en optimisant les processus logistiques et en renégociant les contrats avec les fournisseurs, notamment en Espagne et au Portugal où les coûts des ventes sont élevés.
+    #                         Indicateurs trouvés: > Campagne Marketing
+    #                         > Couts des ventes
+
+    #                         Texte: Analyse des informations clées du contenu du tableau :Le tableau présente les données de ventes mensuelles pour différents pays européens. Les valeurs sont exprimées en unités monétaires (probablement euros). Les données montrent une grande variabilité entre les pays et les mois.Les pays avec les ventes les plus élevées sont l'Irlande, l'Allemagne et la Finlande. Les pays avec les ventes les plus faibles sont la Belgique et le Royaume-Uni.Il est important de noter que certaines valeurs sont négatives, ce qui peut indiquer des pertes ou des coûts associés aux ventes.Recommandations d'action :* Augmenter le Programme Fidélité de 20% pour améliorer la rétention des clients et encourager les achats répétés.* Réduire les Couts Commerciaux de 15% pour améliorer la marge bénéficiaire et compétitivité.
+    #                         Indicateurs trouvés: > Programme Fidélité
+    #                         > Couts Commerciaux
+
+    #                         Texte: {crew_result}
+    #                         Indicateurs trouvés: """
+
+    # extracted_indicators = extract_model.generate_text(
+    #     prompt=extract_prompt_input, guardrails=False
+    # )
+
+    # found_indicators = extract_indicators_from_text(extracted_indicators)
+    # matched_indicators = match_indicators(found_indicators, all_indicators)
+    # matched_indicators_picklist = "static::" + ":".join(matched_indicators)
+
+    # print("\nall_indicators\n")
+    # print(all_indicators)
+    # print("\nextracted_indicators\n")
+    # print(extracted_indicators)
+    # print("\nfound_indicators\n")
+    # print(found_indicators)
+    # print("\nmatched_indicators\n")
+    # print(matched_indicators)
+
+    # extract_prompt_input_countries = f"""Extrais de manière exhaustive tous les pays qui apparaissent dans ce texte.
+    #                 Texte: L'analyse des informations clées du contenu du tableau montre que les pays ont des tendances différentes en ce qui concerne leurs ventes. Certains pays comme la Finlande et l'Irlande ont des ventes élevées tandis que d'autres comme le Royaume-Uni et les Pays-Bas ont des ventes plus faibles.Les deux recommandations d'action les plus pertinentes pour augmenter les performances de votre entreprise sont :• Augmenter Campagne Marketing de 20% pour améliorer la visibilité de vos produits et services sur les marchés internationaux, en particulier en Finlande et en Irlande où les ventes sont élevées.• Réduire Couts des ventes de 15% en optimisant les processus logistiques et en renégociant les contrats avec les fournisseurs, notamment en Espagne et au Portugal où les coûts des ventes sont élevés.
+    #                 Pays trouvés: > Finlande
+    #                 > Irlande
+    #                 > Pays-Bas
+    #                 > Royaume-Uni
+
+    #                 Texte: Analyse des informations clées du contenu du tableau :Le tableau présente les données de ventes mensuelles pour différents pays européens. Les valeurs sont exprimées en unités monétaires (probablement euros). Les données montrent une grande variabilité entre les pays et les mois.Les pays avec les ventes les plus élevées sont l'Irlande, l'Allemagne et la Finlande. Les pays avec les ventes les plus faibles sont la Belgique et le Royaume-Uni.Il est important de noter que certaines valeurs sont négatives, ce qui peut indiquer des pertes ou des coûts associés aux ventes.Recommandations d'action :* Augmenter le Programme Fidélité de 20% pour améliorer la rétention des clients et encourager les achats répétés.* Réduire les Couts Commerciaux de 15% pour améliorer la marge bénéficiaire et compétitivité.
+    #                 Pays trouvés: > Allemagne
+    #                 > Belgique
+    #                 > Finlande
+    #                 > Pays-Bas
+    #                 > Royaume-Uni
+
+    #                 Texte: {crew_result}
+    #                 Pays trouvés:"""
+
+    # extracted_countries = extract_model.generate_text(
+    #     prompt=extract_prompt_input_countries, guardrails=False
+    # )
+    # countries = tm1.elements.get_elements_by_level(country_dim, country_dim, level=0)
+    # found_countries = extract_indicators_from_text(extracted_countries)
+    # matched_countries = match_indicators(found_countries, countries)
+    # matched_countries_picklist = "static::" + ":".join(matched_countries)
+
+    # print('\nextracted_countries\n')
+    # print(extracted_countries)
+    # print('\nfound_countries\n')
+    # print(found_countries)
+    # print('\nmatched_countries\n')
+    # print(matched_countries)
+
+    # all_indicators = tm1.elements.get_element_names(
+    #     dimension_name="Indicateurs_Activité", hierarchy_name="Indicateurs_Activité"
+    # )
+    all_indicators = [elem for elem in all_indicators if elem[0] != "%"]
+    # print(all_indicators)
+    #       [Campagnes Marketing, Programme Fidélité, Couts Commerciaux, Couts des ventes, Couts généraux, Ventes Carburant, Ventes de pièces détachées, Prestation atelier, Recettes commerciales, Recette passager, Couts Stock Biens, Frais de personnel (CD), Coûts des accidents du travail, Réparations, Indemnisation tiers, Frais de voyages (SO), Coût Bio carburant, Coût Gaz, Pneumatiques, Recettes commerciales- engagement contractuel, Revenu des activités de tourisme (occasionnel)]
+
+    extract_prompt_input_percent = f"""Voici une liste stricte et exhaustive d'indicateurs :
+                                {all_indicators}
+
+                                Voici une liste de pays :
+                                {countries}
+
+                                Extrait uniquement les indicateurs, le pourcentage d'augmentation ou de diminution, les pays et les mois associés qui sont recommandés de modifier dans ce texte. 
+
+                                ### Règles strictes d'extraction :
+                                1. **N’extrais un indicateur que s’il est exactement dans la liste fournie (`all_indicators`)**. Si un indicateur n'est pas dans la liste, ignore-le.
+                                2. **Conserve l’intitulé exact** des indicateurs sans les modifier ni les accorder.
+                                3. **Si aucun indicateur valide n'est trouvé, ne retourne rien.**
+                                4. **Exclusion de l'année** : Seuls les mois doivent être extraits, pas l'année.
+                                5. **Formatage des résultats** :
+                                - Si un indicateur doit être augmenté de `p%`, écris : `p%`
+                                - Si un indicateur doit être réduit de `p%`, écris : `-p%`
+                                - Si plusieurs mois ou pays sont concernés pour un même indicateur, tous doivent être extraits.
+
+                                Texte: L'analyse des informations clées du contenu du tableau montre que les pays ont des tendances différentes en ce qui concerne leurs ventes. Certains pays comme la Finlande et l'Irlande ont des ventes élevées tandis que d'autres comme le Royaume-Uni et les Pays-Bas ont des ventes plus faibles. Les deux recommandations d'action les plus pertinentes pour augmenter les performances de votre entreprise sont :• Augmenter Campagne Marketing de 20% en Mars et en Juin 2024 pour améliorer la visibilité de vos produits et services sur les marchés internationaux, en particulier en Finlande et en Irlande où les ventes sont élevées.• Réduire Couts des ventes de 12%  à partir de Octobre en optimisant les processus logistiques et en renégociant les contrats avec les fournisseurs, notamment en Espagne et au Portugal où les coûts des ventes sont élevés.
+                                Indicateurs trouvés: > Campagne Marketing;;20;;Finlande;;Mars
+                                > Campagne Marketing;;20;;Finlande;;Juin
+                                > Coûts des ventes;;-12;;Espagne;;Octobre
+                                > Coûts des ventes;;-12;;Espagne;;Novembre
+                                > Coûts des ventes;;-12;;Espagne;;Décembre                                
+
+                                Texte: Analyse des informations clées du contenu du tableau :Le tableau présente les données de ventes mensuelles pour différents pays européens. Les valeurs sont exprimées en unités monétaires (probablement euros). Les données montrent une grande variabilité entre les pays et les mois.Les pays avec les ventes les plus élevées sont l'Irlande, l'Allemagne et la Finlande. Les pays avec les ventes les plus faibles sont la Belgique et le Royaume-Uni.Il est important de noter que certaines valeurs sont négatives, ce qui peut indiquer des pertes ou des coûts associés aux ventes.Recommandations d'action :* Augmenter le Programme Fidélité de 38% du Royaume-Uni et de la Belgique pour améliorer la rétention des clients et encourager les achats répétés.* Réduire les Couts Commerciaux de 17% en Espagne et en Finlande de Janvier à Avril pour améliorer les Recettes Commerciales, la marge bénéficiaire et la compétitivité. 
+                                Indicateurs trouvés: > Programme Fidélité;;38;;Royaume-Uni
+                                > Programme Fidélité;;38;;Belgique
+                                > Coûts Commerciaux;;-17;;Espagne;;Janvier
+                                > Coûts Commerciaux;;-17;;Espagne;;Février
+                                > Coûts Commerciaux;;-17;;Espagne;;Mars
+                                > Coûts Commerciaux;;-17;;Espagne;;Avril
+                                > Coûts Commerciaux;;-17;;Finlande;;Janvier
+                                > Coûts Commerciaux;;-17;;Finlande;;Février
+                                > Coûts Commerciaux;;-17;;Finlande;;Mars
+                                > Coûts Commerciaux;;-17;;Finlande;;Avril
+                                                                
+                                Texte: {crew_result}
+                                Indicateurs trouvés: """
+
+    extracted_percent = extract_model.generate_text(
+        prompt=extract_prompt_input_percent, guardrails=False
+    )
+    found_percent = extract_indicators_from_text(extracted_percent)
+    # matched_percent_picklist = "static::" + ":".join(found_percent)
+
+    print("\nextracted_percent\n")
+    print(extracted_percent)
+    print("\nfound_percent\n")
+    print(found_percent)
+
+    indicator_percent_country = []
+    for association in found_percent:
+        if len(association.split(";;")) == 3:
+            indicator, percent, pays = association.split(";;")
+            if tm1.elements.exists(
+                dimension_name="Pays", hierarchy_name="Pays", element_name=pays
+            ):
+                indicator_percent_country.append(
+                    {"indicator": indicator, "percent": percent, "country": pays}
+                )
+        if len(association.split(";;")) == 4:
+            indicator, percent, pays, mois = association.split(";;")
+            if tm1.elements.exists(
+                dimension_name="Pays", hierarchy_name="Pays", element_name=pays
+            ):
+                indicator_percent_country.append(
+                    {
+                        "indicator": indicator,
+                        "percent": percent,
+                        "country": pays,
+                        "mois": mois,
+                    }
+                )
+
+    print("\nindicator_percent_country\n")
+    print(indicator_percent_country)
+
+    indicateurs_trouves = [cell["indicator"] for cell in indicator_percent_country]
+    print("\nindicateurs_trouves\n")
+    print(indicateurs_trouves)
+    matched_extracted_indicators = match_indicators(indicateurs_trouves, all_indicators)
+    print("\nmatched_extracted_indicators\n")
+    print(matched_extracted_indicators)
+
+    if indicator_percent_country:
+
+        def update_subset(subset_name, dimension_name, hierarchy_name, matched):
+            indicator_subset = tm1.subsets.get(
+                subset_name, dimension_name, hierarchy_name
             )
-            
-        # st.subheader("Senior Data Analyst")
-        # st.text(
-        #     f"""
-        # Role = Senior Data Analyst
-        # Goal = Analyze the dataframe and provide clear, actionable key points.
-        # Backstory = You are a senior data analyst with a strong background 
-        #             in applied mathematics and computer science, skilled in deriving insights 
-        #             from complex datasets.
-        # Task = Analyze the provided dataframe. Identify trends, anomalies, and key statistics.
-        #        Provide actionable insights and key points for decision-makers."""
-        # )
+            indicator_subset.elements = []
+            tm1.subsets.update(indicator_subset)
+            indicator_subset.add_elements(matched)
+            tm1.subsets.update(indicator_subset)
 
-        # st.subheader("Senior Business Advisor")
-        # st.text(
-        #     """
-        # Role = Senior Business Advisor
-        # Goal = Summarize key points from data analysis and present actionable insights for decision-making with relevant figures and by clearly stating the scope of the action.
-        # Backstory = You are an experienced business consultant with a strong foundation in data-driven 
-        #             decision-making, skilled at distilling complex analyses into clear, impactful recommendations.
-        # Task = Based on the dataframe analysis and the internal documents insights, summarize briefly the analysis and provide clear,
-        #        actionable business insights and recommendations for decision-making with figures and the targeted scope. The recommendations
-        #        must be explicits with figures and precised indicators and scope and justified regarding the data and the internal documents."""
-        # )
+        print("SUBSET Indicateur AVANT UPDATE")
+        print(
+            tm1.subsets.get_element_names(
+                "Indicateurs_Activité", "Indicateurs_Activité", "IndicatorToModify"
+            )
+        )
+        update_subset(
+            "IndicatorToModify",
+            "Indicateurs_Activité",
+            "Indicateurs_Activité",
+            list(set(matched_extracted_indicators)),
+        )
+        print("SUBSET Indicateur APRES UPDATE")
+        print(
+            tm1.subsets.get_element_names(
+                "Indicateurs_Activité", "Indicateurs_Activité", "IndicatorToModify"
+            )
+        )
 
-        # st.subheader("Internal Document Researcher")
-        # st.text(
-        #     """
-        # Role = Internal Document Researcher
-        # Goal= Extract insights and goals with targeted indicators and countries from internal documents to support strategic planning and decision-making.
-        # Backstory = You are a meticulous analyst with expertise in reviewing internal documents, 
-        #             identifying key insights with relevant figures and aligning them with organizational objectives.
-        # Task = Extract key insights and goals from internal documents that align with company objectives and
-        #        strategic planning for the upcoming year."""
-        # )
+        # print('SUBSET PAYS TROUVES AVANT UPDATE')
+        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraits'))
+        # print('SUBSET PAYS CARTE TROUVES AVANT UPDATE')
+        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraitsPourCarte'))
 
-    if st.button("Run Analysis"):
-        # Placeholder for stopwatch
-        stopwatch_placeholder = st.empty()
+        pays_trouves = list(
+            set([cell["country"] for cell in indicator_percent_country])
+        )
+        mois_trouves = list(set([cell["mois"] for cell in indicator_percent_country]))
+        pourcentages_trouves = list(
+            set([cell["percent"] for cell in indicator_percent_country])
+        )
+        print("\npays_trouves\n")
+        print(pays_trouves)
 
-        # Start the stopwatch
-        start_time = time.time()
-        with st.expander(
-            "Processing!",
-        ):
-            sys.stdout = StreamToExpander(st)
-            with st.spinner("Generating Results"):
-                crew_result = product_crew.kickoff()
+        print("\nmois_trouves\n")
+        print(mois_trouves)
 
-        # Stop the stopwatch
-        end_time = time.time()
-        total_time = end_time - start_time
-        stopwatch_placeholder.text(f"Total Time Elapsed: {total_time:.2f} seconds")
-        
-        st.header("Tasks:")
-        st.table({"Tasks": task_values})
+        print("\npourcentages_trouves\n")
+        print(pourcentages_trouves)
 
-        st.header("Results:")
-        st.markdown(crew_result)
+        update_subset("PaysExtraits", "Pays", "Pays", pays_trouves)
+        update_subset("PaysExtraitsPourCarte", "Pays", "Pays", pays_trouves)
+        # print('SUBSET PAYS TROUVES APRES UPDATE')
+        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraits'))
+        # print('SUBSET PAYS CARTE TROUVES APRES UPDATE')
+        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraitsPourCarte'))
+        output_cube_name = "TM1py_output"
+        cube_dimensions_names = tm1.cubes.get_dimension_names(cube_name=cube_name)
 
         tm1.cells.write_value(
-                crew_result,
-                cube_name='TM1py_output',
-                element_tuple=["GenAIAnalysis", "Results"],
+            crew_result,
+            cube_name=output_cube_name,
+            element_tuple=["AgenticAnalysis", "Results"],
+        )
+
+        if 1 == 1:
+            # tm1.cells.write_value(
+            #     matched_indicators,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "CurrentIndicators"],
+            # )
+
+            tm1.cells.write_value(
+                matched_extracted_indicators,
+                cube_name=output_cube_name,
+                element_tuple=["AgenticAnalysis", "IdentifiedIndicators"],
+            )
+            tm1.cells.write_value(
+                pays_trouves,
+                cube_name=output_cube_name,
+                element_tuple=["AgenticAnalysis", "IdentifiedCountries"],
+            )
+            tm1.cells.write_value(
+                mois_trouves,
+                cube_name=output_cube_name,
+                element_tuple=["AgenticAnalysis", "IdentifiedMonths"],
+            )
+            tm1.cells.write_value(
+                pourcentages_trouves,
+                cube_name=output_cube_name,
+                element_tuple=["AgenticAnalysis", "IdentifiedPercent"],
             )
 
-
+            # tm1.cells.write_value(
+            #     matched_indicators_picklist,
+            #     cube_name="}PickList_" + output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "CurrentIndicatorsPickList", "Value"],
+            # )
+            for target in indicator_percent_country:
+                percent, target_country, target_indicator, mois = (
+                    target["percent"],
+                    target["country"],
+                    target["indicator"],
+                    target["mois"],
+                )
+                # print(percent, target_country, target_indicator)
+                for period in tm1.subsets.get_element_names(
+                    "Period", "Period", "2024_mois"
+                ):  # à généraliser pour récupérer le subset de period d'une vue donnée
+                    old_value = tm1.cells.get_value(
+                        cube_name=cube_name,
+                        elements=f"BUDG_VC;;{period};;{target_country};;{target_indicator}",
+                        element_separator=";;",
+                    )
+                    new_value = int(percent)
+                    tm1.cells.write_value(
+                        new_value,
+                        cube_name=cube_name,
+                        element_tuple=[
+                            "BUDG_VC_AJUST%",
+                            period,
+                            target_country,
+                            target_indicator,
+                        ],
+                    )
 
 
 if __name__ == "__main__":
-    run_crewai_app()
+    main()
