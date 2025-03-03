@@ -463,7 +463,7 @@ def main():
         DataCore = Agent(
             role="DataCore Analyst",
             backstory="A data scientist with expertise in statistical modeling and business intelligence.",
-            goal="Transform raw Planning Analytics data into clean, structured information ready for AI insights, identifying the most critical intersections for targeted recommendations.",
+            goal="Transform raw data into clean, structured information ready for AI insights, identifying the most critical intersections for targeted recommendations.",
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
@@ -571,17 +571,59 @@ def main():
 
         # Run the Crew
 
-    crew = create_crewai_setup(cube_name, view_name)
-    crew_result = crew.kickoff()
+    # crew = create_crewai_setup(cube_name, view_name)
+    # crew_result = crew.kickoff()
 
-    tm1.cells.write_value(
-        crew_result,
-        cube_name="TM1py_output",
-        element_tuple=["AgenticAnalysis", "Results"],
-    )
+    crew_result = f"""**Prioritized Action Plan: Aligning Insights with Business Goals**
+
+                    Based on the analysis and recommendations provided, the following prioritized action plan is proposed to align insights with business goals, focusing on defined indicators, critical country intersections, and strategies to strengthen weaknesses and leverage strengths.
+
+                    **Short-term priorities (Q1-Q2)**
+
+                    1. Launch marketing campaigns in Q1 and Q2 to stimulate "Recettes commerciales" outside of peak periods in Europe de l’Ouest (Belgique, Allemagne, Pays-Bas).
+                    2. Develop seasonal offers to increase "Recettes passager" during peak summer periods in Europe du Sud (Portugal, Espagne).
+                    3. Reduce "Coûts de maintenance" by 5% by anticipating and budgeting for Q4 maintenance costs in Scandinavie (Finlande, Suède).
+                    4. Centralize purchases of spare parts to reduce "Coûts des ventes" by 4% in Europe de l’Ouest (Belgique, Allemagne, Pays-Bas).
+
+                    **Mid-term priorities (Q3-Q4)**
+
+                    1. Invest in AI to optimize routes and reduce residual costs ("Coûts généraux") by 2% in Angleterre (Royaume-Uni, Irlande).
+                    2. Develop premium subscriptions for businesses to increase "Recettes commerciales- engagement contractuel" by 5% in Angleterre (Royaume-Uni, Irlande).
+                    3. Automate stock management to prevent seasonal overstocking and reduce "Coûts Stock Biens" by 5% in Europe de l’Est (République tchèque, Slovaquie).
+                    4. Optimize routes to reduce "Frais de voyages (SO)" by 5% and increase efficiency in Europe du Sud (Portugal, Espagne).
+
+                    **Long-term priorities (Year 2 and beyond)**
+
+                    1. Develop local partnerships to attract tourists and increase "Revenus des activités de tourisme (occasionnel)" by 10% in Europe de l’Est (République tchèque, Slovaquie).
+                    2. Invest in "Programmes Fidélité" to increase loyalty and "Recettes commerciales- engagement contractuel" by 10% in Europe du Sud (Portugal, Espagne).
+                    3. Stabilize "Ventes Carburant" through promotional offers (e.g., winter subscriptions) to prevent a decrease in sales at the end of the year in Scandinavie (Finlande, Suède).
+                    4. Enhance "Recettes commerciales" by maintaining operational excellence through quarterly audits in Angleterre (Royaume-Uni, Irlande).
+
+                    **Key Performance Indicators (KPIs)**
+
+                    1. Revenue growth
+                    2. Cost reduction
+                    3. Customer loyalty and retention
+                    4. Operational efficiency
+
+                    **Country-specific KPIs**
+
+                    1. Scandinavie (Finlande, Suède): Stabilize "Ventes Carburant" and reduce "Coûts de maintenance" by 5%.
+                    2. Angleterre (Royaume-Uni, Irlande): Enhance "Recettes commerciales" by 5% and reduce residual costs ("Coûts généraux") by 2%.
+                    3. Europe de l’Est (République tchèque, Slovaquie): Increase "Revenus des activités de tourisme (occasionnel)" by 10% and reduce "Coûts Stock Biens" by 5%.
+                    4. Europe de l’Ouest (Belgique, Allemagne, Pays-Bas): Stimulate "Recettes commerciales" outside of peak periods by 5% and reduce "Coûts des ventes" by 4%.
+                    5. Europe du Sud (Portugal, Espagne): Increase "Recettes passager" during peak summer periods by 10% and reduce "Frais de voyages (SO)" by 5%.
+
+                    By following this prioritized action plan, the company can achieve its objectives and improve overall performance across the different regions."""
+
+    # tm1.cells.write_value(
+    #     crew_result,
+    #     cube_name="TM1py_output",
+    #     element_tuple=["AgenticAnalysis", "Results"],
+    # )
 
     model_id = "meta-llama/llama-3-1-70b-instruct"
-    extract_model_id = "mistralai/mixtral-8x7b-instruct-v01"
+    extract_model_id = "mistralai/mistral-large"
 
     # Defining the model parameters
 
@@ -595,7 +637,7 @@ def main():
 
     extract_model_parameters = {
         "decoding_method": "greedy",
-        "max_new_tokens": 500,
+        "max_new_tokens": 6000,
         "min_new_tokens": 1,
         "stop_sequences": ["\n\n"],
         "repetition_penalty": 1,
@@ -636,113 +678,49 @@ def main():
         ]
         return matched_indicators
 
-    # extract_prompt_input = f"""Voici une liste d'indicateurs:
-    #                         [Campagne Marketing, Programme Fidélité, Couts Commerciaux, Couts des ventes, Couts généraux, Ventes Carburant, Ventes de pièces détachées, Prestation atelier, Recettes commerciales, Recette passager, Couts Stock Biens, Frais de personnel (CD), Coûts des accidents du travail, Réparations, Indemnisation tiers, Frais de voyages (SO), Coût Bio carburant, Coût Gaz, Pneumatiques, Recettes commerciales- engagement contractuel, Revenu des activités de tourisme (occasionnel)]
-    #                         Extrais de manière exhaustive tous les indicateurs qui apparaissent dans ce texte. Si tu ne trouves pas d'indicateurs, ne retourne rien. Conserve exactement le nom des indicateurs de la liste.
-
-    #                         Texte: L'analyse des informations clées du contenu du tableau montre que les pays ont des tendances différentes en ce qui concerne leurs ventes. Certains pays comme la Finlande et l'Irlande ont des ventes élevées tandis que d'autres comme le Royaume-Uni et les Pays-Bas ont des ventes plus faibles.Les deux recommandations d'action les plus pertinentes pour augmenter les performances de votre entreprise sont :• Augmenter Campagne Marketing de 20% pour améliorer la visibilité de vos produits et services sur les marchés internationaux, en particulier en Finlande et en Irlande où les ventes sont élevées.• Réduire Couts des ventes de 15% en optimisant les processus logistiques et en renégociant les contrats avec les fournisseurs, notamment en Espagne et au Portugal où les coûts des ventes sont élevés.
-    #                         Indicateurs trouvés: > Campagne Marketing
-    #                         > Couts des ventes
-
-    #                         Texte: Analyse des informations clées du contenu du tableau :Le tableau présente les données de ventes mensuelles pour différents pays européens. Les valeurs sont exprimées en unités monétaires (probablement euros). Les données montrent une grande variabilité entre les pays et les mois.Les pays avec les ventes les plus élevées sont l'Irlande, l'Allemagne et la Finlande. Les pays avec les ventes les plus faibles sont la Belgique et le Royaume-Uni.Il est important de noter que certaines valeurs sont négatives, ce qui peut indiquer des pertes ou des coûts associés aux ventes.Recommandations d'action :* Augmenter le Programme Fidélité de 20% pour améliorer la rétention des clients et encourager les achats répétés.* Réduire les Couts Commerciaux de 15% pour améliorer la marge bénéficiaire et compétitivité.
-    #                         Indicateurs trouvés: > Programme Fidélité
-    #                         > Couts Commerciaux
-
-    #                         Texte: {crew_result}
-    #                         Indicateurs trouvés: """
-
-    # extracted_indicators = extract_model.generate_text(
-    #     prompt=extract_prompt_input, guardrails=False
-    # )
-
-    # found_indicators = extract_indicators_from_text(extracted_indicators)
-    # matched_indicators = match_indicators(found_indicators, all_indicators)
-    # matched_indicators_picklist = "static::" + ":".join(matched_indicators)
-
-    # print("\nall_indicators\n")
-    # print(all_indicators)
-    # print("\nextracted_indicators\n")
-    # print(extracted_indicators)
-    # print("\nfound_indicators\n")
-    # print(found_indicators)
-    # print("\nmatched_indicators\n")
-    # print(matched_indicators)
-
-    # extract_prompt_input_countries = f"""Extrais de manière exhaustive tous les pays qui apparaissent dans ce texte.
-    #                 Texte: L'analyse des informations clées du contenu du tableau montre que les pays ont des tendances différentes en ce qui concerne leurs ventes. Certains pays comme la Finlande et l'Irlande ont des ventes élevées tandis que d'autres comme le Royaume-Uni et les Pays-Bas ont des ventes plus faibles.Les deux recommandations d'action les plus pertinentes pour augmenter les performances de votre entreprise sont :• Augmenter Campagne Marketing de 20% pour améliorer la visibilité de vos produits et services sur les marchés internationaux, en particulier en Finlande et en Irlande où les ventes sont élevées.• Réduire Couts des ventes de 15% en optimisant les processus logistiques et en renégociant les contrats avec les fournisseurs, notamment en Espagne et au Portugal où les coûts des ventes sont élevés.
-    #                 Pays trouvés: > Finlande
-    #                 > Irlande
-    #                 > Pays-Bas
-    #                 > Royaume-Uni
-
-    #                 Texte: Analyse des informations clées du contenu du tableau :Le tableau présente les données de ventes mensuelles pour différents pays européens. Les valeurs sont exprimées en unités monétaires (probablement euros). Les données montrent une grande variabilité entre les pays et les mois.Les pays avec les ventes les plus élevées sont l'Irlande, l'Allemagne et la Finlande. Les pays avec les ventes les plus faibles sont la Belgique et le Royaume-Uni.Il est important de noter que certaines valeurs sont négatives, ce qui peut indiquer des pertes ou des coûts associés aux ventes.Recommandations d'action :* Augmenter le Programme Fidélité de 20% pour améliorer la rétention des clients et encourager les achats répétés.* Réduire les Couts Commerciaux de 15% pour améliorer la marge bénéficiaire et compétitivité.
-    #                 Pays trouvés: > Allemagne
-    #                 > Belgique
-    #                 > Finlande
-    #                 > Pays-Bas
-    #                 > Royaume-Uni
-
-    #                 Texte: {crew_result}
-    #                 Pays trouvés:"""
-
-    # extracted_countries = extract_model.generate_text(
-    #     prompt=extract_prompt_input_countries, guardrails=False
-    # )
-    # countries = tm1.elements.get_elements_by_level(country_dim, country_dim, level=0)
-    # found_countries = extract_indicators_from_text(extracted_countries)
-    # matched_countries = match_indicators(found_countries, countries)
-    # matched_countries_picklist = "static::" + ":".join(matched_countries)
-
-    # print('\nextracted_countries\n')
-    # print(extracted_countries)
-    # print('\nfound_countries\n')
-    # print(found_countries)
-    # print('\nmatched_countries\n')
-    # print(matched_countries)
-
-    # all_indicators = tm1.elements.get_element_names(
-    #     dimension_name="Indicateurs_Activité", hierarchy_name="Indicateurs_Activité"
-    # )
     all_indicators = [elem for elem in all_indicators if elem[0] != "%"]
-    # print(all_indicators)
-    #       [Campagnes Marketing, Programme Fidélité, Couts Commerciaux, Couts des ventes, Couts généraux, Ventes Carburant, Ventes de pièces détachées, Prestation atelier, Recettes commerciales, Recette passager, Couts Stock Biens, Frais de personnel (CD), Coûts des accidents du travail, Réparations, Indemnisation tiers, Frais de voyages (SO), Coût Bio carburant, Coût Gaz, Pneumatiques, Recettes commerciales- engagement contractuel, Revenu des activités de tourisme (occasionnel)]
 
     extract_prompt_input_percent = f"""Voici une liste stricte et exhaustive d'indicateurs :
                                 {all_indicators}
 
                                 Voici une liste de pays :
                                 {countries}
-
-                                Extrait uniquement les indicateurs, le pourcentage d'augmentation ou de diminution, les pays et les mois associés qui sont recommandés de modifier dans ce texte. 
+                                        
+                                Extrait uniquement les indicateurs, le pourcentage d'augmentation/diminution, les pays et les mois associés qui sont recommandés de modifier dans ce texte. 
 
                                 ### Règles strictes d'extraction :
-                                1. **N’extrais un indicateur que s’il est exactement dans la liste d'indicateurs fournie **. Si un indicateur n'est pas dans la liste, ignore-le.
-                                2. **Conserve l’intitulé exact** des indicateurs sans les modifier ni les accorder.
-                                3. **Si aucun indicateur valide n'est trouvé, ne retourne rien.**
-                                4. **Exclusion de l'année** : Seuls les mois doivent être extraits, pas l'année.
-                                5. **Formatage des résultats** :
-                                - Si un indicateur doit être augmenté de `p%`, écris : `p%`
-                                - Si un indicateur doit être réduit de `p%`, écris : `-p%`
-                                - Si plusieurs mois ou pays sont concernés pour un même indicateur, tous doivent être extraits.
+                                1. **Conversion des périodes en mois** :
+                                - Q1 → Janvier, Février, Mars
+                                - Q2 → Avril, Mai, Juin  
+                                - Q3 → Juillet, Août, Septembre
+                                - Q4 → Octobre, Novembre, Décembre
+                                - "Début d'année" → Janvier, Février, Mars
+                                - "Fin d'année" → Octobre, Novembre, Décembre
+                                - "Été" → Juin, Juillet, Août
+                                - "Hiver" → Décembre, Janvier, Février
 
-                                Texte: L'analyse des informations clées du contenu du tableau montre que les pays ont des tendances différentes en ce qui concerne leurs ventes. Certains pays comme la Finlande et l'Irlande ont des ventes élevées tandis que d'autres comme le Royaume-Uni et les Pays-Bas ont des ventes plus faibles. Les deux recommandations d'action les plus pertinentes pour augmenter les performances de votre entreprise sont :• Augmenter Campagne Marketing de 20% en Mars et en Juin 2024 pour améliorer la visibilité de vos produits et services sur les marchés internationaux, en particulier en Finlande et en Irlande où les ventes sont élevées.• Réduire Couts des ventes de 12%  à partir de Octobre en optimisant les processus logistiques et en renégociant les contrats avec les fournisseurs, notamment en Espagne et au Portugal où les coûts des ventes sont élevés.
-                                Indicateurs trouvés: > {{'indicator':'Campagne Marketing','percent':'20','country':Finlande','mois':'Mars'}}
-                                > {{'indicator':'Campagne Marketing','percent':'20','country':Finlande','mois':'Juin'}}
-                                > {{'indicator':'Coûts des ventes','percent':'-12','country':Espagne','mois':'Octobre'}}
-                                > {{'indicator':'Coûts des ventes','percent':'-12','country':Espagne','mois':'Novembre'}}
-                                > {{'indicator':'Coûts des ventes','percent':'-12','country':Espagne','mois':'Décembre'}}
+                                2. **N’extrais un indicateur que s’il est exactement dans la liste fournie**
 
-                                Texte: Analyse des informations clées du contenu du tableau :Le tableau présente les données de ventes mensuelles pour différents pays européens. Les valeurs sont exprimées en unités monétaires (probablement euros). Les données montrent une grande variabilité entre les pays et les mois.Les pays avec les ventes les plus élevées sont l'Irlande, l'Allemagne et la Finlande. Les pays avec les ventes les plus faibles sont la Belgique et le Royaume-Uni.Il est important de noter que certaines valeurs sont négatives, ce qui peut indiquer des pertes ou des coûts associés aux ventes.Recommandations d'action :* Augmenter le Programme Fidélité de 38% du Royaume-Uni et de la Belgique pour améliorer la rétention des clients et encourager les achats répétés.* Réduire les Couts Commerciaux de 17% en Espagne et en Finlande de Janvier à Avril pour améliorer les Recettes Commerciales, la marge bénéficiaire et la compétitivité. 
-                                Indicateurs trouvés: > {{'indicator':'Programme Fidélité','percent':'38','Pays':Royaume-Uni'}}
-                                > {{'indicator':'Programme Fidélité','percent':'38','country':Royaume-Uni'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Janvier'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Février'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Mars'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Espagne','mois':'Avril'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Janvier'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Février'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Mars'}}
-                                > {{'indicator':'Coûts Commerciaux','percent':'-17','country':Finlande','mois':'Avril'}}
+                                3. **Conserve l’intitulé exact** des indicateurs
+
+                                4. **Formatage** :
+                                - Augmentation : 'p%'
+                                - Réduction : '-p%'
+                                - Pour les plages de mois (ex: Q1-Q2), liste tous les mois concernés
+
+                                5. **Hiérarchie pays/région** :
+                                - Si un groupe de pays est mentionné (ex: Europe de l'Ouest), décompose en pays individuels
+                                - Uniquement les pays de la liste fournie
+
+                                ### Exemple :
+                                Texte: "Réduire Coûts de maintenance de 5% en Q4 en Scandinavie"
+                                Sortie: 
+                                > {{'indicator':'Coûts de maintenance','percent':'-5','country':'Finlande','mois':'Octobre'}}
+                                > {{'indicator':'Coûts de maintenance','percent':'-5','country':'Finlande','mois':'Novembre'}}
+                                > {{'indicator':'Coûts de maintenance','percent':'-5','country':'Finlande','mois':'Décembre'}}
+                                > {{'indicator':'Coûts de maintenance','percent':'-5','country':'Suède','mois':'Octobre'}}
+                                > {{'indicator':'Coûts de maintenance','percent':'-5','country':'Suède','mois':'Novembre'}}
+                                > {{'indicator':'Coûts de maintenance','percent':'-5','country':'Suède','mois':'Décembre'}}
                                 
                                 Texte: {crew_result}
                                 Indicateurs trouvés: """
@@ -757,6 +735,12 @@ def main():
     print(extracted_percent)
     print("\nfound_percent\n")
     print(found_percent)
+
+    def remove_incomplete_extraction(extraction):
+        if extraction[-1][-1] != "}":
+            del extraction[-1]
+
+    remove_incomplete_extraction(found_percent)
 
     indicator_percent_country = [ast.literal_eval(val) for val in found_percent]
     # for association in found_percent:
@@ -873,7 +857,7 @@ def main():
             cube_name=output_cube_name,
             element_tuple=["AgenticAnalysis", "Results"],
         )
-        year = "2024"
+        year = "2025"
         all_months = {
             "janvier": "01",
             "février": "02",
@@ -928,11 +912,19 @@ def main():
                     new_value = int(percent)
                 else:
                     continue
-                if "country" in target.keys():
+                if "country" in target.keys() and tm1.elements.exists(
+                    dimension_name="Pays",
+                    hierarchy_name="Pays",
+                    element_name=target["country"],
+                ):
                     target_country = target["country"]
                 else:
                     continue
-                if "indicator" in target.keys():
+                if "indicator" in target.keys() and tm1.elements.exists(
+                    dimension_name="Indicateurs_Activité",
+                    hierarchy_name="Indicateurs_Activité",
+                    element_name=target["indicator"],
+                ):
                     target_indicator = target["indicator"]
                 else:
                     continue
@@ -944,11 +936,12 @@ def main():
                             cube_name=cube_name,
                             element_tuple=[
                                 "BUDG_VC_AJUST%",
-                                year + "." + all_months[mois],
+                                year + "." + all_months[str(mois).lower()],
                                 target_country,
                                 target_indicator,
                             ],
                         )
+                    print(percent, mois, target_country, target_indicator)
                 else:
                     for period in tm1.subsets.get_element_names(
                         "Period", "Period", year + "_mois"
@@ -968,7 +961,7 @@ def main():
                                 target_indicator,
                             ],
                         )
-                # print(percent, target_country, target_indicator)
+                    print(percent, period, target_country, target_indicator)
 
 
 if __name__ == "__main__":
