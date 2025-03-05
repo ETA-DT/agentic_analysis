@@ -245,6 +245,13 @@ llm_llama = WatsonxLLM(
     project_id=os.getenv("PROJECT_ID", ""),
 )
 
+llm_mistral = WatsonxLLM(
+    model_id="mistralai/mistral-large",
+    url="https://us-south.ml.cloud.ibm.com",
+    params=parameters_llama,
+    project_id=os.getenv("PROJECT_ID", ""),
+)
+
 # Create the function calling llm
 function_calling_llm = WatsonxLLM(
     model_id="mistralai/mistral-large",
@@ -257,7 +264,7 @@ function_calling_llm = WatsonxLLM(
 llm = LLM(
     model="watsonx/meta-llama/llama-3-405b-instruct",
     base_url="https://api.watsonx.ai/v1",
-    parameters=parameters_llama,
+    # parameters=parameters_llama,
 )
 
 
@@ -463,7 +470,7 @@ def main():
         DataCore = Agent(
             role="DataCore Analyst",
             backstory="A data scientist with expertise in statistical modeling and business intelligence.",
-            goal="Transform raw data into clean, structured information ready for AI insights, identifying the most critical intersections for targeted recommendations.",
+            goal="Transform raw data into clean, structured information ready for AI insights, identifying the most critical intersections for targeted recommendations to improve entreprise performance.",
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
@@ -518,7 +525,7 @@ def main():
         # Task Definitions
 
         data_task = Task(
-            description="Clean and analyze Planning Analytics data to extract trends, identify key strengths and weaknesses, and determine the most critical intersections for prioritization.",
+            description="Clean and analyze data to extract trends, identify key strengths and weaknesses, and determine the most critical intersections for prioritization.",
             agent=DataCore,
             expected_output="A structured and cleaned DataFrame with key trends highlighted, including priority intersections and identified strengths and weaknesses.",
         )
@@ -526,13 +533,13 @@ def main():
         doc_task = Task(
             description="Analyze internal documents to extract relevant business insights and strategic objectives.",
             agent=DocuMentor,
-            expected_output="A summary of key themes, contextual insights, and strategic goals from internal documents.",
+            expected_output="A summary of contextual insights, and strategic goals from internal documents.",
         )
 
         insight_task = Task(
             description=f"Synthesize quantitative and qualitative insights into actionable recommendations, focusing on strengths and weaknesses, targeting only indicators in {all_indicators}, and prioritizing affected countries in alignment with strategic objectives.",
             agent=InsightSynthesizer,
-            expected_output="A list of data-backed business recommendations integrating both datasets, targeting relevant indicators and key countries, and addressing identified strengths and weaknesses. The output should keep the exact syntax of the indicators from the indicators list",
+            expected_output="A list of data-backed business recommendations integrating both datasets' analysis and internal strategy documents, targeting priority indicators and countries, and addressing identified strengths and weaknesses. The output should keep the exact syntax of the indicators from the indicators list",
         )
 
         strategy_task = Task(
@@ -571,56 +578,14 @@ def main():
 
         # Run the Crew
 
-    # crew = create_crewai_setup(cube_name, view_name)
-    # crew_result = crew.kickoff()
+    crew = create_crewai_setup(cube_name, view_name)
+    crew_result = crew.kickoff()
 
-    crew_result = f"""**Prioritized Action Plan: Aligning Insights with Business Goals**
-
-                    Based on the analysis and recommendations provided, the following prioritized action plan is proposed to align insights with business goals, focusing on defined indicators, critical country intersections, and strategies to strengthen weaknesses and leverage strengths.
-
-                    **Short-term priorities (Q1-Q2)**
-
-                    1. Launch marketing campaigns in Q1 and Q2 to stimulate "Recettes commerciales" outside of peak periods in Europe de l’Ouest (Belgique, Allemagne, Pays-Bas).
-                    2. Develop seasonal offers to increase "Recettes passager" during peak summer periods in Europe du Sud (Portugal, Espagne).
-                    3. Reduce "Coûts de maintenance" by 5% by anticipating and budgeting for Q4 maintenance costs in Scandinavie (Finlande, Suède).
-                    4. Centralize purchases of spare parts to reduce "Coûts des ventes" by 4% in Europe de l’Ouest (Belgique, Allemagne, Pays-Bas).
-
-                    **Mid-term priorities (Q3-Q4)**
-
-                    1. Invest in AI to optimize routes and reduce residual costs ("Coûts généraux") by 2% in Angleterre (Royaume-Uni, Irlande).
-                    2. Develop premium subscriptions for businesses to increase "Recettes commerciales- engagement contractuel" by 5% in Angleterre (Royaume-Uni, Irlande).
-                    3. Automate stock management to prevent seasonal overstocking and reduce "Coûts Stock Biens" by 5% in Europe de l’Est (République tchèque, Slovaquie).
-                    4. Optimize routes to reduce "Frais de voyages (SO)" by 5% and increase efficiency in Europe du Sud (Portugal, Espagne).
-
-                    **Long-term priorities (Year 2 and beyond)**
-
-                    1. Develop local partnerships to attract tourists and increase "Revenus des activités de tourisme (occasionnel)" by 10% in Europe de l’Est (République tchèque, Slovaquie).
-                    2. Invest in "Programmes Fidélité" to increase loyalty and "Recettes commerciales- engagement contractuel" by 10% in Europe du Sud (Portugal, Espagne).
-                    3. Stabilize "Ventes Carburant" through promotional offers (e.g., winter subscriptions) to prevent a decrease in sales at the end of the year in Scandinavie (Finlande, Suède).
-                    4. Enhance "Recettes commerciales" by maintaining operational excellence through quarterly audits in Angleterre (Royaume-Uni, Irlande).
-
-                    **Key Performance Indicators (KPIs)**
-
-                    1. Revenue growth
-                    2. Cost reduction
-                    3. Customer loyalty and retention
-                    4. Operational efficiency
-
-                    **Country-specific KPIs**
-
-                    1. Scandinavie (Finlande, Suède): Stabilize "Ventes Carburant" and reduce "Coûts de maintenance" by 5%.
-                    2. Angleterre (Royaume-Uni, Irlande): Enhance "Recettes commerciales" by 5% and reduce residual costs ("Coûts généraux") by 2%.
-                    3. Europe de l’Est (République tchèque, Slovaquie): Increase "Revenus des activités de tourisme (occasionnel)" by 10% and reduce "Coûts Stock Biens" by 5%.
-                    4. Europe de l’Ouest (Belgique, Allemagne, Pays-Bas): Stimulate "Recettes commerciales" outside of peak periods by 5% and reduce "Coûts des ventes" by 4%.
-                    5. Europe du Sud (Portugal, Espagne): Increase "Recettes passager" during peak summer periods by 10% and reduce "Frais de voyages (SO)" by 5%.
-
-                    By following this prioritized action plan, the company can achieve its objectives and improve overall performance across the different regions."""
-
-    # tm1.cells.write_value(
-    #     crew_result,
-    #     cube_name="TM1py_output",
-    #     element_tuple=["AgenticAnalysis", "Results"],
-    # )
+    tm1.cells.write_value(
+        crew_result,
+        cube_name="TM1py_output",
+        element_tuple=["AgenticAnalysis", "Results"],
+    )
 
     model_id = "meta-llama/llama-3-1-70b-instruct"
     extract_model_id = "mistralai/mistral-large"
@@ -743,36 +708,6 @@ def main():
     remove_incomplete_extraction(found_percent)
 
     indicator_percent_country = [ast.literal_eval(val) for val in found_percent]
-    # for association in found_percent:
-    #     if len(association.split(";;")) == 2:
-    #         indicator, percent, pays = association.split(";;")
-    #         if tm1.elements.exists(
-    #             dimension_name="Pays", hierarchy_name="Pays", element_name=pays
-    #         ):
-    #             indicator_percent_country.append(
-    #                 {"indicator": indicator, "percent": percent, "country": pays}
-    #             )
-    #     if len(association.split(";;")) == 3:
-    #         indicator, percent, pays = association.split(";;")
-    #         if tm1.elements.exists(
-    #             dimension_name="Pays", hierarchy_name="Pays", element_name=pays
-    #         ):
-    #             indicator_percent_country.append(
-    #                 {"indicator": indicator, "percent": percent, "country": pays}
-    #             )
-    #     if len(association.split(";;")) == 4:
-    #         indicator, percent, pays, mois = association.split(";;")
-    #         if tm1.elements.exists(
-    #             dimension_name="Pays", hierarchy_name="Pays", element_name=pays
-    #         ):
-    #             indicator_percent_country.append(
-    #                 {
-    #                     "indicator": indicator,
-    #                     "percent": percent,
-    #                     "country": pays,
-    #                     "mois": mois,
-    #                 }
-    #             )
 
     print("\nindicator_percent_country\n")
     print(indicator_percent_country)
@@ -814,11 +749,6 @@ def main():
             )
         )
 
-        # print('SUBSET PAYS TROUVES AVANT UPDATE')
-        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraits'))
-        # print('SUBSET PAYS CARTE TROUVES AVANT UPDATE')
-        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraitsPourCarte'))
-
         pays_trouves = list(
             set([cell["country"] for cell in indicator_percent_country])
         )
@@ -852,11 +782,6 @@ def main():
         output_cube_name = "TM1py_output"
         cube_dimensions_names = tm1.cubes.get_dimension_names(cube_name=cube_name)
 
-        tm1.cells.write_value(
-            crew_result,
-            cube_name=output_cube_name,
-            element_tuple=["AgenticAnalysis", "Results"],
-        )
         year = "2025"
         all_months = {
             "janvier": "01",
@@ -873,33 +798,27 @@ def main():
             "décembre": "12",
         }
 
-        if 1 == 1:
+        if indicator_percent_country:
             # tm1.cells.write_value(
-            #     matched_indicators,
+            #     matched_extracted_indicators,
             #     cube_name=output_cube_name,
-            #     element_tuple=["AgenticAnalysis", "CurrentIndicators"],
+            #     element_tuple=["AgenticAnalysis", "IdentifiedIndicators"],
             # )
-
-            tm1.cells.write_value(
-                matched_extracted_indicators,
-                cube_name=output_cube_name,
-                element_tuple=["AgenticAnalysis", "IdentifiedIndicators"],
-            )
-            tm1.cells.write_value(
-                pays_trouves,
-                cube_name=output_cube_name,
-                element_tuple=["AgenticAnalysis", "IdentifiedCountries"],
-            )
-            tm1.cells.write_value(
-                mois_trouves,
-                cube_name=output_cube_name,
-                element_tuple=["AgenticAnalysis", "IdentifiedMonths"],
-            )
-            tm1.cells.write_value(
-                pourcentages_trouves,
-                cube_name=output_cube_name,
-                element_tuple=["AgenticAnalysis", "IdentifiedPercent"],
-            )
+            # tm1.cells.write_value(
+            #     pays_trouves,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "IdentifiedCountries"],
+            # )
+            # tm1.cells.write_value(
+            #     mois_trouves,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "IdentifiedMonths"],
+            # )
+            # tm1.cells.write_value(
+            #     pourcentages_trouves,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "IdentifiedPercent"],
+            # )
 
             # tm1.cells.write_value(
             #     matched_indicators_picklist,
@@ -909,7 +828,7 @@ def main():
             for target in indicator_percent_country:
                 if "percent" in target.keys():
                     percent = target["percent"]
-                    new_value = int(percent)
+                    new_value = float(percent)
                 else:
                     continue
                 if "country" in target.keys() and tm1.elements.exists(
@@ -941,7 +860,7 @@ def main():
                                 target_indicator,
                             ],
                         )
-                    print(percent, mois, target_country, target_indicator)
+                    # print(percent, mois, target_country, target_indicator)
                 else:
                     for period in tm1.subsets.get_element_names(
                         "Period", "Period", year + "_mois"
@@ -961,7 +880,7 @@ def main():
                                 target_indicator,
                             ],
                         )
-                    print(percent, period, target_country, target_indicator)
+                    # print(percent, period, target_country, target_indicator)
 
 
 if __name__ == "__main__":
