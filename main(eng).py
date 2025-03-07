@@ -41,9 +41,9 @@ from ibm_watsonx_ai.foundation_models.utils.enums import (
 
 credentials = Credentials(url=WATSONX_URL, api_key=WATSONX_APIKEY)
 
-# Bibliothèques liées à Streamlit
-import streamlit as st
-from streamlit_file_browser import st_file_browser
+# # Bibliothèques liées à Streamlit
+# import streamlit as st
+# from streamlit_file_browser import st_file_browser
 
 # Bibliothèques de traitement de données
 import pandas as pd
@@ -195,7 +195,7 @@ parameters = {
     "decoding_method": "sample",
     "max_new_tokens": 3000,
     "temperature": 0.1,
-    "top_k": 50,
+    "top_k": 25,
     "top_p": 1,
     "repetition_penalty": 1,
 }
@@ -204,7 +204,7 @@ parameters_llama = {
     "decoding_method": "sample",
     "max_new_tokens": 5000,
     "temperature": 0.5,
-    "top_k": 50,
+    "top_k": 25,
     "top_p": 1,
     "repetition_penalty": 1,
 }
@@ -216,33 +216,12 @@ ibm_model = Model(
     project_id=WATSONX_PROJECT_ID,
 )
 
-chat = ChatWatsonx(
-    model_id="ibm/granite-34b-code-instruct",
-    url="https://us-south.ml.cloud.ibm.com",
-    project_id=WATSONX_PROJECT_ID,
-    params=parameters,
-)
-
 pandas_llm = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
     url=get_credentials().get("url"),
     apikey=get_credentials().get("apikey"),
     project_id=WATSONX_PROJECT_ID,
     params=parameters,
-)
-
-llm_llama = WatsonxLLM(
-    model_id="meta-llama/llama-3-405b-instruct",
-    url="https://us-south.ml.cloud.ibm.com",
-    params=parameters_llama,
-    project_id=os.getenv("PROJECT_ID", ""),
-)
-
-llm_mistral = WatsonxLLM(
-    model_id="mistralai/mistral-large",
-    url="https://us-south.ml.cloud.ibm.com",
-    params=parameters_llama,
-    project_id=os.getenv("PROJECT_ID", ""),
 )
 
 # Create the function calling llm
@@ -253,12 +232,14 @@ function_calling_llm = WatsonxLLM(
     project_id=os.getenv("PROJECT_ID", ""),
 )
 
-
 llm = LLM(
     model="watsonx/meta-llama/llama-3-405b-instruct",
     base_url="https://api.watsonx.ai/v1",
-    temperature=0.1,
+    temperature=0.05,
     max_tokens=5000,
+    # frequency_penalty=0.1,
+    # presence_penalty=0.1,
+    seed=42,
     top_p=0.8,
 )
 
@@ -502,7 +483,8 @@ def main():
         DataCore = Agent(
             role="DataCore Analyst",
             backstory="A data scientist with expertise in statistical modeling and business intelligence.",
-            goal="Transform raw data into clean, structured information ready for AI insights, identifying the most critical intersections for targeted recommendations to improve entreprise performance.",
+            goal="Transform raw data into clean, structured business insights, identifying the most critical intersections for targeted actionnable recommendations to improve entreprise performance.",
+            memory=True,
             verbose=True,
             allow_delegation=True,
             tools=[dataframe_creator],
@@ -514,7 +496,7 @@ def main():
         DocuMentor = Agent(
             role="DocuMentor Analyst",
             backstory="An NLP expert skilled in extracting insights from internal business documents.",
-            goal="Analyze internal documents to identify, contextual insights, and strategic objectives.",
+            goal="Retrieve strategic objectives from internal documents that are related to the scope of the dataframe.",
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
@@ -559,7 +541,7 @@ def main():
         data_task = Task(
             description="Extract simple business insights, identify key strengths and weaknesses, and determine the most critical intersections for prioritization.",
             agent=DataCore,
-            expected_output="A structured and report with key trends highlighted, including priority intersections and identified strengths and weaknesses to focus on.",
+            expected_output="A structured report with key trends highlighted, including priority intersections and identified strengths and weaknesses to focus on.",
         )
 
         doc_task = Task(
@@ -571,13 +553,13 @@ def main():
         insight_task = Task(
             description=f"Synthesize quantitative and qualitative insights into actionable recommendations, focusing on strengths and weaknesses, targeting only indicators in {view_indicators_english}, and prioritizing affected countries among {view_countries_english} in alignment with strategic objectives.",
             agent=InsightSynthesizer,
-            expected_output="A list of data-backed business recommendations focusing on priorities targeted by both the DataCore Analyst and the DocuMentor Analyst, targeting priority indicators and countries, and addressing identified strengths and weaknesses. The output should keep the exact syntax of the indicators from the indicators list",
+            expected_output="A list of data-backed business recommendations focusing on priorities targeted by both the DataCore Analyst and the DocuMentor Analyst, targeting priority indicators, countries and periods, and addressing identified strengths and weaknesses. The output should keep the exact syntax of the indicators from the indicators list",
         )
 
         strategy_task = Task(
             description="Validate insights, prioritize strategic actions, and align them with business goals, focusing on strengths and weaknesses to meet internal objectives.",
             agent=StrategyNavigator,
-            expected_output="A prioritized action plan aligning insights with business goals, focusing on defined indicators, critical country intersections, and strategies to strengthen weaknesses and leverage strengths.",
+            expected_output="A prioritized action plan aligning insights with internal business goals, focusing on defined indicators, critical country intersections, specific time period and strategies to strengthen weaknesses and leverage strengths.",
         )
 
         # tech_task = Task(
@@ -675,6 +657,52 @@ def main():
         ]
         return matched_indicators
 
+    # extract_prompt_input_percent = f"""Here is a strict and exhaustive list of indicators:
+    #                             {view_indicators_english}
+
+    #                             Here is a list of countries:
+    #                             {view_countries_english}
+
+    #                             Extract only the indicators, the percentage of increase/decrease, the associated countries, and the months recommended for modification in this text.
+
+    #                             ### Strict Extraction Rules:
+    #                             1. **Convert periods into months**:
+    #                             - Q1 → January, February, March
+    #                             - Q2 → April, May, June
+    #                             - Q3 → July, August, September
+    #                             - Q4 → October, November, December
+    #                             - "Beginning of the year" → January, February, March
+    #                             - "End of the year" → October, November, December
+    #                             - "Summer" → June, July, August
+    #                             - "Winter" → December, January, February
+
+    #                             2. **Extract an indicator only if it is exactly in the provided list**
+
+    #                             3. **Keep the exact name** of the indicators
+
+    #                             4. **Formatting**:
+    #                             - Increase: 'p%'
+    #                             - Decrease: '-p%'
+    #                             - For month ranges (e.g., Q1-Q2), list all relevant months
+    #                             - Each line must start with this symbol >
+
+    #                             5. **Country/Region Hierarchy**:
+    #                             - If a group of countries is mentioned (e.g., Western Europe), break it down into individual countries
+    #                             - Only include countries from the provided list
+
+    #                             ### Example:
+    #                             Text: "Reduce Maintenance Costs by 5% in Q4 in Scandinavia"
+    #                             Output:
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'October'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'November'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'December'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'October'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'November'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'December'}}
+
+    #                             Text: {crew_result}
+    #                             Extracted indicators: """
+
     extract_prompt_input_percent = f"""Here is a strict and exhaustive list of indicators:  
                                 {view_indicators_english}  
 
@@ -698,27 +726,34 @@ def main():
 
                                 3. **Keep the exact name** of the indicators  
 
-                                4. **Formatting**:  
-                                - Increase: 'p%'  
-                                - Decrease: '-p%'  
-                                - For month ranges (e.g., Q1-Q2), list all relevant months
-                                - Each line must start with this symbol >
+                                4. **Determine Percentage Sign Based on Context**:  
+                                - Use **positive percentages** (`p%`) for indicators like sales, revenue, or profit when terms like "increase," "improve," or "boost" are used.  
+                                - Use **negative percentages** (`-p%`) for indicators like costs, expenses, or losses when terms like "reduce," "improve," "lower," or "cut" are used.  
 
-                                5. **Country/Region Hierarchy**:  
-                                - If a group of countries is mentioned (e.g., Western Europe), break it down into individual countries  
-                                - Only include countries from the provided list  
+                                5. **Formatting**:  
+                                - Each line must start with this symbol `>`  
+                                - For month ranges (e.g., Q1-Q2), list all relevant months  
 
-                                ### Example:  
-                                Text: "Reduce Maintenance Costs by 5% in Q4 in Scandinavia"  
+                                6. **Country/Region Hierarchy**:  
+                                - If a group of countries is mentioned (e.g., Scandinavia), break it down into individual countries from the provided list  
+
+                                ### Examples to Clarify Context:  
+                                1. **Improving Costs (Negative %)**:  
+                                Text: "Improve Maintenance Costs by 5% in Q4 in Scandinavia"  
                                 Output:  
                                 > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'October'}}  
                                 > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'November'}}  
-                                > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'December'}}  
-                                > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'October'}}  
-                                > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'November'}}  
-                                > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'December'}}  
+                                > [...]  
 
-                                Text: {crew_result}  
+                                2. **Improving Sales (Positive %)**:  
+                                Text: "Boost Sales Revenue by 10% in Q1 in France"  
+                                Output:  
+                                > {{'indicator':'Sales Revenue','percent':'10','country':'France','month':'January'}}  
+                                > {{'indicator':'Sales Revenue','percent':'10','country':'France','month':'February'}}  
+                                > [...]  
+
+                                ### Text to Process:  
+                                {crew_result}  
                                 Extracted indicators: """
 
     extracted_percent = extract_model.generate_text(
