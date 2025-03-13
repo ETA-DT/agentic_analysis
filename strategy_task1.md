@@ -1,0 +1,83 @@
+**Strategic Annual Plan: Reducing Logistics Costs and Closing Identified Gaps**
+
+**Executive Summary:**
+This strategic annual plan outlines recommended actions to reduce logistics costs and close identified gaps in Finland and Portugal. The plan aligns with internal business goals, focusing on cost reduction, efficiency improvement, and customer satisfaction. By implementing these actions, we aim to reduce logistics costs by at least 10% in Finland and 12% in Portugal, resulting in significant cost savings and improved logistics efficiency.
+
+**Action Plan:**
+
+**Quarter 1 (January-March):**
+
+1. **Renegotiate contracts with logistics providers (Finland and Portugal)**:
+	* Review existing contracts and identify areas for improvement.
+	* Negotiate with logistics providers to secure better rates and terms.
+	* Target cost reduction: 5% (€450k) in Finland and 2% (€180k) in Portugal.
+2. **Develop a comprehensive logistics strategy (Shared Recommendation)**:
+	* Align logistics strategy with business objectives.
+	* Focus on cost reduction, efficiency improvement, and customer satisfaction.
+	* Establish a logistics strategy team to oversee implementation.
+3. **Establish key performance indicators (KPIs) (Shared Recommendation)**:
+	* Define KPIs to measure logistics performance.
+	* Track progress and identify areas for improvement.
+	* Establish a KPI dashboard to monitor performance.
+
+**Quarter 2 (April-June):**
+
+1. **Optimize transportation routes and modes (Finland)**:
+	* Analyze transportation routes and modes.
+	* Implement optimized routes and modes to reduce fuel consumption and lower emissions.
+	* Target cost reduction: 2% (€180k).
+2. **Consolidate shipments and reduce frequency (Portugal)**:
+	* Analyze shipment patterns and identify opportunities for consolidation.
+	* Implement consolidated shipments and reduced frequency to minimize transportation costs.
+	* Target cost reduction: 6% (€540k).
+3. **Provide training and development programs (Shared Recommendation)**:
+	* Identify training needs for logistics staff.
+	* Develop and implement training programs to enhance skills, knowledge, and competencies.
+
+**Quarter 3 (July-September):**
+
+1. **Implement a transportation management system (TMS) (Finland)**:
+	* Invest in a TMS to streamline logistics operations.
+	* Improve visibility and reduce costs.
+	* Target cost reduction: 1% (€90k).
+2. **Improve inventory management (Portugal)**:
+	* Implement just-in-time inventory management practices.
+	* Reduce inventory holding costs and lower storage costs.
+	* Target cost reduction: 3% (€270k).
+3. **Regularly review and assess logistics operations (Shared Recommendation)**:
+	* Schedule regular reviews to identify opportunities for improvement.
+	* Optimize processes and reduce costs.
+
+**Quarter 4 (October-December):**
+
+1. **Increase warehouse efficiency (Finland)**:
+	* Implement lean warehouse management practices.
+	* Reduce labor costs and improve inventory management.
+	* Target cost reduction: 0.5% (€45k).
+2. **Invest in logistics automation (Portugal)**:
+	* Invest in logistics automation technologies.
+	* Improve efficiency, reduce labor costs, and decrease costs.
+	* Target cost reduction: 1% (€90k).
+3. **Review and evaluate progress (Shared Recommendation)**:
+	* Review progress against KPIs.
+	* Evaluate the effectiveness of implemented actions.
+	* Identify areas for further improvement.
+
+**Budget Allocation:**
+
+* Renegotiate contracts with logistics providers: €100k (Finland) and €50k (Portugal)
+* Develop a comprehensive logistics strategy: €50k (Shared)
+* Establish KPIs: €20k (Shared)
+* Optimize transportation routes and modes: €50k (Finland)
+* Consolidate shipments and reduce frequency: €100k (Portugal)
+* Implement a TMS: €150k (Finland)
+* Improve inventory management: €50k (Portugal)
+* Increase warehouse efficiency: €20k (Finland)
+* Invest in logistics automation: €100k (Portugal)
+* Training and development programs: €20k (Shared)
+* Regular reviews and assessments: €10k (Shared)
+
+Total budget allocation: €620k (Finland) and €520k (Portugal)
+
+**Conclusion:**
+This strategic annual plan outlines a prioritized action plan to reduce logistics costs and close identified gaps in Finland and Portugal. By implementing these actions, we aim to achieve significant cost savings and improve logistics efficiency. Regular reviews and assessments will ensure that we are on track to meet our targets and identify areas for further improvement.

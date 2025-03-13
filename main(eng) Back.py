@@ -2,8 +2,6 @@ import os
 import sys
 import json
 import ast
-import datetime
-from datetime import datetime
 import time
 import re
 import configparser
@@ -30,7 +28,7 @@ os.environ["WATSONX_PROJECT_ID"] = WATSONX_PROJECT_ID
 
 # Importation des bibliothèques liées à IBM Watsonx
 from ibm_watsonx_ai import Credentials
-from ibm_watsonx_ai.foundation_models import Model, ModelInference
+from ibm_watsonx_ai.foundation_models import Model
 from ibm_watsonx_ai.metanames import (
     EmbedTextParamsMetaNames as EmbedParams,
     GenTextParamsMetaNames as GenParams,
@@ -194,16 +192,16 @@ model_id = "meta-llama/llama-3-2-3b-instruct"
 model_id_mistral = "mistralai/mixtral-8x7b-instruct-v01"
 
 parameters = {
-    "decoding_method": "greedy",
+    "decoding_method": "sample",
     "max_new_tokens": 3000,
-    "temperature": 0,
+    "temperature": 0.1,
     "top_k": 25,
     "top_p": 1,
     "repetition_penalty": 1,
 }
 
 parameters_llama = {
-    "decoding_method": "greedy",
+    "decoding_method": "sample",
     "max_new_tokens": 5000,
     "temperature": 0.5,
     "top_k": 25,
@@ -211,32 +209,12 @@ parameters_llama = {
     "repetition_penalty": 1,
 }
 
-rag_model_id = "mistralai/mistral-large"
-
-# Defining the model parameters
-
-rag_model_parameters = {
-    "decoding_method": "greedy",
-    "max_new_tokens": 6000,
-    "min_new_tokens": 1,
-    "repetition_penalty": 1,
-}
-
-## Defining the Model object
-
-rag_model = ModelInference(
-    model_id=rag_model_id,
-    params=rag_model_parameters,
-    credentials=get_credentials(),
+ibm_model = Model(
+    model_id=model_id,
+    params=parameters,
+    credentials=credentials,
     project_id=WATSONX_PROJECT_ID,
 )
-
-# ibm_model = Model(
-#     model_id=model_id,
-#     params=parameters,
-#     credentials=credentials,
-#     project_id=WATSONX_PROJECT_ID,
-# )
 
 pandas_llm = WatsonxLLM(
     model_id="meta-llama/llama-3-405b-instruct",  # codellama/codellama-34b-instruct-hf", #"mistralai/mistral-large", #"google/flan-t5-xxl", "ibm/granite-34b-code-instruct",
@@ -345,8 +323,8 @@ def main():
         """
         df = df.fillna(0)
         rename_period_alias(df)
-        numeric_columns = df.select_dtypes(include=float).columns.tolist()
-        df[numeric_columns] = df[numeric_columns].apply(round_2)
+        for col in df.columns[-12:]:
+            df[col] = df[col].apply(round_2)
         # df = df.set_index(df.columns[0])
         for dim in tm1.cubes.get_dimension_names(cube_name=cube_name):
             if dim in df.columns:
@@ -431,32 +409,6 @@ def main():
         context = f"""{get_context(cube_name,view_name)} \nDataframe:\n{dataframe_prompt_input(cube_name,view_name)}"""
         return context
 
-    # Melted version of tm1 dataframe in english
-    def round_value(df):
-        df["Value"] = df["Value"].apply(round_2)
-
-    def to_english(df, cube_name):
-        for dim in tm1.cubes.get_dimension_names(cube_name=cube_name):
-            if dim in df.columns and dim != "Period":
-                df[dim] = df[dim].apply(
-                    lambda x: tm1.elements.get_attribute_of_elements(
-                        dimension_name=dim,
-                        hierarchy_name=dim,
-                        attribute="English",
-                        elements=[x],
-                    )[x]
-                )
-        return df
-
-    def preprocessing_melt_english(cube_name, view_name):
-        df = tm1.cells.execute_view_dataframe(cube_name, view_name)
-        round_value(df)
-        to_english(df, cube_name)
-        df.rename(columns={"Period": "Month"})
-        return df
-
-    preprocessed_dataframe = preprocessing_melt_english(cube_name, view_name)
-
     def create_crewai_setup(cube_name, view_name):
         ### RAG Setup
 
@@ -466,25 +418,18 @@ def main():
         @tool
         def retriever(query: str) -> List[LCDocument]:
             """
-            Retrieve relevant contextual documents and generate an answer to the given query.
+            Retrieve relevant documents based on a given query.
 
-            This tool performs a semantic similarity search over a document index to retrieve
-            the top-k most relevant documents for a given natural language query. and
-            creates a clean context paragraph. This context is then used by
-            a Retrieval-Augmented Generation (RAG) model to generate a response.
+            This function performs a similarity search against a document store using the provided query.
+            It retrieves up to 4 documents that meet a relevance score threshold of 0.5. Each retrieved
+            document's metadata is updated with its corresponding relevance score.
 
-            Parameters:
-                query (str): A natural language question or prompt requiring contextual information.
+            Args:
+                query (str): The input query string to search for relevant documents.
 
             Returns:
-                List[LCDocument]: A list containing a single LCDocument where `page_content` is the
-                generated response from the RAG model, and `metadata` includes the relevance scores
-                of the underlying documents used for context.
-
-            Usage:
-                Use this tool when a question requires factual or context-based information retrieved
-                from a knowledge base. The tool both retrieves relevant supporting context and answers
-                the query based on that information.
+                List[Document]: A list of documents that are relevant to the query. Each document contains
+                metadata with an added "score" key indicating its relevance score.
             """
             docs, scores = zip(
                 *docsearch.similarity_search_with_relevance_scores(
@@ -495,146 +440,75 @@ def main():
                 doc.metadata["score"] = score
 
             # gather all retrieved documents into single string paragraph
-            # removed_n = [
-            #     doc.page_content.replace("\n", " ") for doc in docs
-            # ]  # remove \n
-            unique_retrieval = list(
-                set([doc.page_content for doc in docs])
-            )  # remove duplicates documents
+            removed_n = [
+                doc.page_content.replace("\n", " ") for doc in docs
+            ]  # remove \n
+            unique_retrieval = list(set(removed_n))  # remove duplicates documents
             retrieved_context = "\n".join(unique_retrieval)
-
-            rag_prompt_input = (
-                f"Based on the retrieved chunks, {query} ? CHUNKS: {retrieved_context}"
-            )
-            rag_response = rag_model.generate_text(
-                prompt=rag_prompt_input, guardrails=False
-            )
-
-            return rag_response
+            return retrieved_context
 
         @tool
-        def dataframe_creator(
-            query: str,
-            df=preprocessed_dataframe,
-        ) -> str:
+        def dataframe_creator(query: str, df=current_dataframe) -> str:
             """
-            Generate an answer or perform an operation on a pandas DataFrame based on a natural language query.
+            Execute a query on a pandas DataFrame using an agent.
 
-            This tool uses a language model agent to interpret and execute user queries on a provided pandas
-            DataFrame. It supports querying, filtering, summarization, and transformations by converting
-            natural language instructions into code that operates on the DataFrame.
+            This function uses a pandas DataFrame agent to process the given query. The agent is configured to
+            allow dangerous code execution and provides verbose output during execution. The query result is
+            returned as a string, with intermediate steps suppressed and parsing errors handled.
 
-            Parameters:
-                query (str): A natural language question or instruction related to the DataFrame.
-                df (pd.DataFrame, optional): The DataFrame to run the query on. Defaults to `preprocessed_dataframe`.
+            Args:
+                query (str): The query to be executed on the DataFrame.
 
             Returns:
-                str: The textual output generated by the agent after interpreting and executing the query.
-
-            Usage:
-                Use this tool to interact with structured tabular data using natural language, especially
-                when quick insights, filtering, or calculations are needed.
+                str: The result of the query execution as a string.
             """
             agent = create_pandas_dataframe_agent(
                 pandas_llm,
                 df,
                 agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+                # suffix= "Always return a JSON dictionary that can be parsed into a data frame containing the requested information.",
                 verbose=True,
                 allow_dangerous_code=True,
                 include_df_in_prompt=True,
-                early_stopping_method="force",
                 number_of_head_rows=len(df),
-                max_iterations=2,
             )
             response = agent.invoke(
-                query, handle_parsing_errors=True, return_intermediate_steps=True
+                query, handle_parsing_errors=True, return_intermediate_steps=False
             )
             return response["output"]
 
-        @tool
-        def difference(a: float, b: float) -> float:
-            """
-            Calculate the difference between two floating-point numbers.
-
-            This function subtracts the second number (`b`) from the first number (`a`) and returns the result.
-
-            Args:
-                a (float): The first number (minuend).
-                b (float): The second number (subtrahend).
-
-            Returns:
-                float: The result of subtracting `b` from `a` (i.e., `a - b`).
-            """
-            return a - b
-
-        @tool
-        def convert_period_to_year(period: str) -> str:
-            """
-            Convert a period string in the format 'YYYY.MM' to a 4-digit year string.
-
-            This tool parses a date string representing a year and month, and extracts
-            only the year component as a string.
-
-            Parameters:
-                period (str): A date string in the format 'YYYY.MM' (e.g., '2023.05').
-
-            Returns:
-                str: The 4-digit year extracted from the input period (e.g., '2023').
-
-            Usage:
-                Use this tool when you need to normalize or simplify period values to
-                just the year for reporting, filtering, or aggregation purposes.
-            """
-            return datetime.strptime(period, "%Y.%M").date().strftime("%Y")
-
         # Agents Definition
 
-        # DataCore Analyst
+        ## DataCore Analyst
         DataCore = Agent(
-            role="Business Performance Analyst",
-            backstory="A accurate data scientist specializing in calculations with data values from multidimensional dataframes.",
-            goal="Calculate relevant values such as maximum, minimum, total year by indicator and by country",
-            tools=[dataframe_creator, convert_period_to_year],
+            role="DataCore Analyst",
+            backstory="A data scientist with expertise in statistical modeling and business intelligence.",
+            goal="Transform raw data into clean, structured business insights, identifying the most critical intersections for targeted actionnable recommendations to improve entreprise performance.",
             memory=True,
             verbose=True,
             allow_delegation=True,
+            tools=[dataframe_creator],
             llm=llm,
-            max_iter=4,
             function_calling_llm=function_calling_llm,
         )
 
         ## DocuMentor Analyst
         DocuMentor = Agent(
-            role="Document Analyst",
+            role="DocuMentor Analyst",
             backstory="An NLP expert skilled in extracting insights from internal business documents.",
-            goal="Retrieve strategic targets from internal documents regarding only the indicator-country pairs that could be formed from the indicators and countries mentionned in the context.",
+            goal="Retrieve strategic objectives from internal documents that are related to the scope of the dataframe.",
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
             llm=llm,
-            max_iter=5,
             function_calling_llm=function_calling_llm,
-        )
-
-        ## Gap Analyst
-        GapAnalyst = Agent(
-            role="Strategic Gap Quantifier",
-            backstory="An operations researcher specializied in gap analysis between target objectives and actual performance.",
-            goal="Calculate quantitative gaps between business performance data and target values for each indicator by country",
-            verbose=True,
-            allow_delegation=False,
-            llm=llm,
-            function_calling_llm=function_calling_llm,
-            tools=[difference],
-            max_iter=5,
-            memory=True,
         )
 
         ## Insight Synthesizer
         InsightSynthesizer = Agent(
             role="Insight Synthesizer",
             backstory="A strategist blending AI-driven analytics with business insights.",
-            goal="List recommandation actions to tackle solely the identified gaps",
+            goal="Merge quantitative trends and qualitative insights into actionable business recommendations, prioritizing key countries based on data analysis and aligning with internal objectives.",
             verbose=True,
             llm=llm,
             function_calling_llm=function_calling_llm,
@@ -644,83 +518,61 @@ def main():
         StrategyNavigator = Agent(
             role="Strategy Navigator",
             backstory="A business strategist ensuring insights align with company goals and market trends.",
-            goal="Ensure actions directly address indicators blocking strategic goals and prioritize them.",
+            goal="Validate insights, identify strengths and weaknesses, and align findings with business strategy, ensuring focus on key countries and business-critical indicators.",
             # tools=[ai_tool],
             verbose=True,
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
 
-        # Task Definitions
-        data_task = Task(
-            description="Analyze data to calculate the following information: annual minimum, maximum, sum grouped by country, indicator and year. You should never recreate the dataframe given as an input.",
-            agent=DataCore,
-            expected_output="Annual report of the performance by indicator and by country that appear in the dataframe input. You should never make up new indicators or new countries that does not appear in the dataframe",
-            output_file="data_task.md",
-        )
-
-        # data_task = Task(
-        #     description="Extract simple business insights, identify key strengths and weaknesses, and determine the most critical intersections for prioritization.",
-        #     agent=DataCore,
-        #     expected_output="A structured report with key trends highlighted, including priority intersections and identified strengths and weaknesses to focus on.",
+        # ## Tech Integrator
+        # TechIntegrator = Agent(
+        #     role="Tech Integrator",
+        #     backstory="A systems engineer ensuring seamless integration of AI and analytics into workflows.",
+        #     goal="Automate workflows, connect IBM Planning Analytics with AI models, and monitor performance.",
+        #     # tools=[api_tool],
+        #     verbose=True,
+        #     llm=llm,
+        #     function_calling_llm=function_calling_llm,
         # )
 
-        doc_task = Task(
-            description=(
-                """Analyze internal documents to extract strategic objectives for the country-indicator pairs defined in the context.
-                You must restrict your analysis to only those pairs that can be formed from the provided
-                list of countries and list of indicators within the context.
-                Do not address or mention any other countries or indicators outside this scope."""
-            ),
-            agent=DocuMentor,
-            expected_output=(
-                """A list of the country-indicator pairs (from the context) and their corresponding target values
-                as explicitly stated in internal documents.
-                You should not make assumptions or fabricate targets.
-                You should not infer or combine targets across different indicators.
-                Only report targets if their country and indicator are exactly the same as in the context."""
-            ),
-            context=[data_task],
-            output_file="doc_task.md",
+        # Task Definitions
+
+        data_task = Task(
+            description="Extract simple business insights, identify key strengths and weaknesses, and determine the most critical intersections for prioritization.",
+            agent=DataCore,
+            expected_output="A structured report with key trends highlighted, including priority intersections and identified strengths and weaknesses to focus on.",
         )
 
-        gap_task = Task(
-            description=f"For each indicator stated in the Context, calculate the gap between its target annual value and the annual current value. If an indicator does not have an attached target value, skip its gap calculation.",
-            agent=GapAnalyst,
-            expected_output="""
-                Gap Analysis Report:
-                - Target: [Target value]
-                - Current Performance: [Metric from data]
-                - Gap Size: [Quantitative difference (target - current)]
-                - Percent Gap: [Quantitative difference ratio (Gap Size / Current)]
-                - Criticality Score: [1-5 rating]
-            """,
-            context=[data_task, doc_task],
-            output_file="gap_analysis.md",
+        doc_task = Task(
+            description="Analyze internal documents to extract relevant business insights and strategic objectives .",
+            agent=DocuMentor,
+            expected_output="A summary of contextual insights, and strategic goals from internal documents.",
         )
 
         insight_task = Task(
-            description="Report of the actions to take to reduce the identified gaps",
+            description=f"Synthesize quantitative and qualitative insights into actionable recommendations, focusing on strengths and weaknesses, targeting only indicators in {view_indicators_english}, and prioritizing affected countries among {view_countries_english} in alignment with strategic objectives.",
             agent=InsightSynthesizer,
-            expected_output=f"List of recommended actions to reduce solely the identified gaps in the CONTEXT. You should distribute the percent change throughout the year so that the yearly average percent change equals the percent gap identified.",
-            context=[gap_task],
-            output_file="insight_task.md",
+            expected_output="A list of data-backed business recommendations focusing on priorities targeted by both the DataCore Analyst and the DocuMentor Analyst, targeting priority indicators, countries and periods, and addressing identified strengths and weaknesses. The output should keep the exact syntax of the indicators from the indicators list",
         )
 
         strategy_task = Task(
-            description="Based on the identified gaps, elaborate a strategic annual plan with recommended actions to achieve the business targets.",
+            description="Validate insights, prioritize strategic actions, and align them with business goals, focusing on strengths and weaknesses to meet internal objectives.",
             agent=StrategyNavigator,
-            expected_output="A prioritized action plan aligning insights with internal business goals, focusing on the identified gaps",
-            context=[insight_task],
-            output_file="strategy_task.md",
+            expected_output="A prioritized action plan aligning insights with internal business goals, focusing on defined indicators, critical country intersections, specific time period and strategies to strengthen weaknesses and leverage strengths.",
         )
+
+        # tech_task = Task(
+        #     description="Ensure seamless technical integration between AI models and Planning Analytics data.",
+        #     agent=TechIntegrator,
+        #     expected_output="An automated workflow integrating Planning Analytics and AI-driven insights."
+        # )
 
         # Crew Assembly
         crew = Crew(
             agents=[
                 DataCore,
                 DocuMentor,
-                GapAnalyst,
                 InsightSynthesizer,
                 StrategyNavigator,
                 # TechIntegrator,
@@ -728,10 +580,9 @@ def main():
             tasks=[
                 data_task,
                 doc_task,
-                gap_task,
                 insight_task,
                 strategy_task,
-                # tech_task,
+                #    tech_task,
             ],
             verbose=True,
             process=Process.sequential,
@@ -744,18 +595,24 @@ def main():
     crew = create_crewai_setup(cube_name, view_name)
     crew_result = crew.kickoff()
 
-    with open("crew_result.txt", "w") as file:
-        file.write(str(crew_result))
-
     tm1.cells.write_value(
         crew_result,
         cube_name="TM1py_output",
         element_tuple=["AgenticAnalysis", "Results"],
     )
 
+    model_id = "meta-llama/llama-3-3-70b-instruct"
     extract_model_id = "mistralai/mistral-large"
 
     # Defining the model parameters
+
+    parameters = {
+        "decoding_method": "greedy",
+        "min_new_tokens": 20,
+        "max_new_tokens": 900,
+        "repetition_penalty": 1.1,
+        "stop_sequences": ["'''''''''", '"""', "```"],
+    }
 
     extract_model_parameters = {
         "decoding_method": "greedy",
@@ -765,13 +622,24 @@ def main():
         "repetition_penalty": 1,
     }
 
+    project_id = config.get(
+        "Keys", "project_ID"
+    )  # replace with new watsonx.ai project_id
+
     ## Defining the Model object
+
+    model = Model(
+        model_id=model_id,
+        params=parameters,
+        credentials=get_credentials(),
+        project_id=project_id,
+    )
 
     extract_model = Model(
         model_id=extract_model_id,
         params=extract_model_parameters,
         credentials=get_credentials(),
-        project_id=WATSONX_PROJECT_ID,
+        project_id=project_id,
     )
 
     def extract_indicators_from_text(text):
@@ -781,13 +649,59 @@ def main():
         return found_indicators
 
     def match_indicators(found_indicators, reference_indicators):
-        # Comparer les éléments extraits avec ceux de la liste de référence
+        # Comparer les indicateurs extraits avec ceux de la liste de référence
         matched_indicators = [
             indicator
             for indicator in found_indicators
             if indicator in reference_indicators
         ]
         return matched_indicators
+
+    # extract_prompt_input_percent = f"""Here is a strict and exhaustive list of indicators:
+    #                             {view_indicators_english}
+
+    #                             Here is a list of countries:
+    #                             {view_countries_english}
+
+    #                             Extract only the indicators, the percentage of increase/decrease, the associated countries, and the months recommended for modification in this text.
+
+    #                             ### Strict Extraction Rules:
+    #                             1. **Convert periods into months**:
+    #                             - Q1 → January, February, March
+    #                             - Q2 → April, May, June
+    #                             - Q3 → July, August, September
+    #                             - Q4 → October, November, December
+    #                             - "Beginning of the year" → January, February, March
+    #                             - "End of the year" → October, November, December
+    #                             - "Summer" → June, July, August
+    #                             - "Winter" → December, January, February
+
+    #                             2. **Extract an indicator only if it is exactly in the provided list**
+
+    #                             3. **Keep the exact name** of the indicators
+
+    #                             4. **Formatting**:
+    #                             - Increase: 'p%'
+    #                             - Decrease: '-p%'
+    #                             - For month ranges (e.g., Q1-Q2), list all relevant months
+    #                             - Each line must start with this symbol >
+
+    #                             5. **Country/Region Hierarchy**:
+    #                             - If a group of countries is mentioned (e.g., Western Europe), break it down into individual countries
+    #                             - Only include countries from the provided list
+
+    #                             ### Example:
+    #                             Text: "Reduce Maintenance Costs by 5% in Q4 in Scandinavia"
+    #                             Output:
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'October'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'November'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Finland','month':'December'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'October'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'November'}}
+    #                             > {{'indicator':'Maintenance Costs','percent':'-5','country':'Sweden','month':'December'}}
+
+    #                             Text: {crew_result}
+    #                             Extracted indicators: """
 
     extract_prompt_input_percent = f"""Here is a strict and exhaustive list of indicators:  
                                 {view_indicators_english}  
@@ -813,7 +727,7 @@ def main():
                                 3. **Keep the exact name** of the indicators  
 
                                 4. **Determine Percentage Sign Based on Context**:  
-                                - Use **positive percentages** (`p%`) for indicators like sales, revenue, or profit when terms like "increase," "improve," or "boost" are used.
+                                - Use **positive percentages** (`p%`) for indicators like sales, revenue, or profit when terms like "increase," "improve," or "boost" are used.  
                                 - Use **negative percentages** (`-p%`) for indicators like costs, expenses, or losses when terms like "reduce," "improve," "lower," or "cut" are used.  
 
                                 5. **Formatting**:  
@@ -865,9 +779,7 @@ def main():
     print("\nindicator_percent_country\n")
     print(indicator_percent_country)
 
-    indicateurs_trouves = list(
-        set([cell["indicator"] for cell in indicator_percent_country])
-    )
+    indicateurs_trouves = [cell["indicator"] for cell in indicator_percent_country]
     print("\nindicateurs_trouves\n")
     print(indicateurs_trouves)
     matched_extracted_indicators = match_indicators(
@@ -950,7 +862,6 @@ def main():
                 ]
             )
         )
-
         print("\npays_trouves\n")
         print(list(set(pays_trouves)))
 
@@ -960,34 +871,12 @@ def main():
         print("\npourcentages_trouves\n")
         print(pourcentages_trouves)
 
-        print("SUBSET PAYS TROUVES AVANT UPDATE")
-        print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraits"))
-
-        print("SUBSET PAYS CARTE TROUVES AVANT UPDATE")
-        print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraitsPourCarte"))
-
         update_subset("PaysExtraits", "Pays", "Pays", pays_trouves)
         update_subset("PaysExtraitsPourCarte", "Pays", "Pays", pays_trouves)
-
-        print("SUBSET PAYS TROUVES APRES UPDATE")
-        print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraits"))
-
-        print("SUBSET PAYS CARTE TROUVES APRES UPDATE")
-        print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraitsPourCarte"))
-
-        update_subset(
-            "IndicatorToModify",
-            "Indicateurs_Activité",
-            "Indicateurs_Activité",
-            list(set(matched_extracted_indicators)),
-        )
-        print("SUBSET Indicateur APRES UPDATE")
-        print(
-            tm1.subsets.get_element_names(
-                "Indicateurs_Activité", "Indicateurs_Activité", "IndicatorToModify"
-            )
-        )
-
+        # print('SUBSET PAYS TROUVES APRES UPDATE')
+        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraits'))
+        # print('SUBSET PAYS CARTE TROUVES APRES UPDATE')
+        # print(tm1.subsets.get_element_names('Pays','Pays','PaysExtraitsPourCarte'))
         output_cube_name = "TM1py_output"
         cube_dimensions_names = tm1.cubes.get_dimension_names(cube_name=cube_name)
 
@@ -1008,11 +897,36 @@ def main():
         }
 
         if indicator_percent_country:
+            # tm1.cells.write_value(
+            #     matched_extracted_indicators,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "IdentifiedIndicators"],
+            # )
+            # tm1.cells.write_value(
+            #     pays_trouves,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "IdentifiedCountries"],
+            # )
+            # tm1.cells.write_value(
+            #     mois_trouves,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "IdentifiedMonths"],
+            # )
+            # tm1.cells.write_value(
+            #     pourcentages_trouves,
+            #     cube_name=output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "IdentifiedPercent"],
+            # )
+
+            # tm1.cells.write_value(
+            #     matched_indicators_picklist,
+            #     cube_name="}PickList_" + output_cube_name,
+            #     element_tuple=["AgenticAnalysis", "CurrentIndicatorsPickList", "Value"],
+            # )
             for target in indicator_percent_country:
                 if "percent" in target.keys() and check_if_numeric(target["percent"]):
                     percent = target["percent"]
                     new_value = float(percent) / 100
-                    print(new_value)
                 else:
                     continue
                 if "country" in target.keys() and tm1.elements.exists(
@@ -1054,17 +968,15 @@ def main():
                             elements=f"BUDG_VC;;{period};;{target_country};;{target_indicator}",
                             element_separator=";;",
                         )
-                        tm1.cells.write(
+                        tm1.cells.write_value(
+                            new_value,
                             cube_name=cube_name,
-                            cellset_as_dict={
-                                (
-                                    "BUDG_VC_AJUST%",
-                                    period,
-                                    target_country,
-                                    target_indicator,
-                                ): new_value
-                            },
-                            precision=5,
+                            element_tuple=[
+                                "BUDG_VC_AJUST%",
+                                period,
+                                target_country,
+                                target_indicator,
+                            ],
                         )
                     # print(percent, period, target_country, target_indicator)
 
