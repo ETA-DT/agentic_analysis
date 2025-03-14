@@ -1,0 +1,5 @@
+- Belgium, Commercial Costs: €9,800k
+- Belgium, General Costs: €8,400k, €6,900k
+- Sweden, Commercial Costs: €12,000k
+- Sweden, General Costs: €9,000k, €7,500k
+- Portugal, Logistics Costs: €8,200k

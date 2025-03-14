@@ -1,0 +1,43 @@
+Gap Analysis Report:
+
+- Country: Belgium
+  - Indicator: Commercial Costs
+    - Target: €9,800k
+    - Current Performance: €6,773.4k
+    - Gap Size: €3,026.6k
+    - Percent Gap: 44.7%
+    - Criticality Score: 3
+  - Indicator: General Costs
+    - Target: €8,400k
+    - Current Performance: €9,072.6k
+    - Gap Size: -€672.6k
+    - Percent Gap: -7.4%
+    - Criticality Score: 2
+
+- Country: Portugal
+  - Indicator: Commercial Costs
+    - Target: €53,000k
+    - Current Performance: €6,842.2k
+    - Gap Size: €46,157.8k
+    - Percent Gap: 675.1%
+    - Criticality Score: 5
+  - Indicator: Logistics Costs
+    - Target: €8,000k
+    - Current Performance: €8,975k
+    - Gap Size: -€975k
+    - Percent Gap: -10.9%
+    - Criticality Score: 2
+
+- Country: Sweden
+  - Indicator: Commercial Costs
+    - Target: €60,000k
+    - Current Performance: €9,155.2k
+    - Gap Size: €50,844.8k
+    - Percent Gap: 555.1%
+    - Criticality Score: 5
+  - Indicator: Marketing Costs
+    - Target: €8,500k
+    - Current Performance: €9,273.2k
+    - Gap Size: -€773.2k
+    - Percent Gap: -8.3%
+    - Criticality Score: 2

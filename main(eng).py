@@ -138,6 +138,7 @@ def create_vectorstore(path):
 
 
 doc_folder = "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/PAAgenticAnalysis/agentic_analysis/Documents RAG"
+# doc_folder = "D:/Applications/Tm1/Tango_Core_Model/Data/Python_Scripts/PAAgenticAnalysis/agentic_analysis/Notes de Cadrage (target 2025)"
 
 
 def update_doc_folder(folder):
@@ -217,7 +218,7 @@ rag_model_id = "mistralai/mistral-large"
 
 rag_model_parameters = {
     "decoding_method": "greedy",
-    "max_new_tokens": 6000,
+    "max_new_tokens": 5000,
     "min_new_tokens": 1,
     "repetition_penalty": 1,
 }
@@ -257,7 +258,7 @@ function_calling_llm = WatsonxLLM(
 llm = LLM(
     model="watsonx/meta-llama/llama-3-405b-instruct",
     base_url="https://api.watsonx.ai/v1",
-    temperature=0.05,
+    temperature=0.03,
     max_tokens=5000,
     # frequency_penalty=0.1,
     # presence_penalty=0.1,
@@ -463,54 +464,109 @@ def main():
         pythonREPL = PythonREPLTool()
         duckduckgo_search = DuckDuckGoSearchRun()
 
-        @tool
-        def retriever(query: str) -> List[LCDocument]:
-            """
-            Retrieve relevant contextual documents and generate an answer to the given query.
+        user_question = tm1.cells.get_value(
+            cube_name=output_cube_name,
+            elements=f"AgenticAnalysis;;Question",
+            element_separator=";;",
+        )
 
-            This tool performs a semantic similarity search over a document index to retrieve
-            the top-k most relevant documents for a given natural language query. and
-            creates a clean context paragraph. This context is then used by
-            a Retrieval-Augmented Generation (RAG) model to generate a response.
+        if user_question != "":
 
-            Parameters:
-                query (str): A natural language question or prompt requiring contextual information.
+            @tool
+            def retriever(query: str) -> List[LCDocument]:
+                """
+                Retrieve relevant contextual documents and generate an answer to the given query.
 
-            Returns:
-                List[LCDocument]: A list containing a single LCDocument where `page_content` is the
-                generated response from the RAG model, and `metadata` includes the relevance scores
-                of the underlying documents used for context.
+                This tool performs a semantic similarity search over a document index to retrieve
+                the top-k most relevant documents for a given natural language query. and
+                creates a clean context paragraph. This context is then used by
+                a Retrieval-Augmented Generation (RAG) model to generate a response.
 
-            Usage:
-                Use this tool when a question requires factual or context-based information retrieved
-                from a knowledge base. The tool both retrieves relevant supporting context and answers
-                the query based on that information.
-            """
-            docs, scores = zip(
-                *docsearch.similarity_search_with_relevance_scores(
-                    query, score_threshold=0.3, k=6
+                Parameters:
+                    query (str): A natural language question or prompt requiring contextual information.
+
+                Returns:
+                    List[LCDocument]: A list containing a single LCDocument where `page_content` is the
+                    generated response from the RAG model, and `metadata` includes the relevance scores
+                    of the underlying documents used for context.
+
+                Usage:
+                    Use this tool when a question requires factual or context-based information retrieved
+                    from a knowledge base. The tool both retrieves relevant supporting context and answers
+                    the query based on that information.
+                """
+                docs, scores = zip(
+                    *docsearch.similarity_search_with_relevance_scores(
+                        query, score_threshold=0.3, k=6
+                    )
                 )
-            )
-            for doc, score in zip(docs, scores):
-                doc.metadata["score"] = score
+                for doc, score in zip(docs, scores):
+                    doc.metadata["score"] = score
 
-            # gather all retrieved documents into single string paragraph
-            # removed_n = [
-            #     doc.page_content.replace("\n", " ") for doc in docs
-            # ]  # remove \n
-            unique_retrieval = list(
-                set([doc.page_content for doc in docs])
-            )  # remove duplicates documents
-            retrieved_context = "\n".join(unique_retrieval)
+                # gather all retrieved documents into single string paragraph
+                # removed_n = [
+                #     doc.page_content.replace("\n", " ") for doc in docs
+                # ]  # remove \n
+                unique_retrieval = list(
+                    set([doc.page_content for doc in docs])
+                )  # remove duplicates documents
+                retrieved_context = "\n".join(unique_retrieval)
 
-            rag_prompt_input = (
-                f"Based on the retrieved chunks, {query} ? CHUNKS: {retrieved_context}"
-            )
-            rag_response = rag_model.generate_text(
-                prompt=rag_prompt_input, guardrails=False
-            )
+                rag_prompt_input = f"Based on the retrieved INFORMATION, {query} ? INFORMATION: {retrieved_context}"
+                rag_response = rag_model.generate_text(
+                    prompt=rag_prompt_input, guardrails=False
+                )
 
-            return rag_response
+                return rag_response
+
+        else:
+
+            @tool
+            def retriever(query=user_question) -> List[LCDocument]:
+                """
+                Retrieve relevant contextual documents and generate an answer to the given query.
+
+                This tool performs a semantic similarity search over a document index to retrieve
+                the top-k most relevant documents for a given natural language query. and
+                creates a clean context paragraph. This context is then used by
+                a Retrieval-Augmented Generation (RAG) model to generate a response.
+
+                Parameters:
+                    query (str): A natural language question or prompt requiring contextual information.
+
+                Returns:
+                    List[LCDocument]: A list containing a single LCDocument where `page_content` is the
+                    generated response from the RAG model, and `metadata` includes the relevance scores
+                    of the underlying documents used for context.
+
+                Usage:
+                    Use this tool when a question requires factual or context-based information retrieved
+                    from a knowledge base. The tool both retrieves relevant supporting context and answers
+                    the query based on that information.
+                """
+                docs, scores = zip(
+                    *docsearch.similarity_search_with_relevance_scores(
+                        query, score_threshold=0.3, k=6
+                    )
+                )
+                for doc, score in zip(docs, scores):
+                    doc.metadata["score"] = score
+
+                # gather all retrieved documents into single string paragraph
+                # removed_n = [
+                #     doc.page_content.replace("\n", " ") for doc in docs
+                # ]  # remove \n
+                unique_retrieval = list(
+                    set([doc.page_content for doc in docs])
+                )  # remove duplicates documents
+                retrieved_context = "\n".join(unique_retrieval)
+
+                rag_prompt_input = f"Based on the retrieved chunks, {query} ? CHUNKS: {retrieved_context}"
+                rag_response = rag_model.generate_text(
+                    prompt=rag_prompt_input, guardrails=False
+                )
+
+                return rag_response
 
         @tool
         def dataframe_creator(
@@ -568,6 +624,25 @@ def main():
             return a - b
 
         @tool
+        def division(a: float, b: float) -> float:
+            """
+            Calculate the quotient of two floating-point numbers.
+
+            Divides the first number (`a`) by the second number (`b`).
+            The function requires the divisor (`b`) to be non-zero to avoid division errors.
+            This function is commonly used for calculating ratios, proportions, or scaling factors.
+
+            Args:
+                a (float): The dividend (number to be divided).
+                b (float): The divisor (number to divide by). Must be non-zero.
+
+            Returns:
+                float: The result of dividing `a` by `b` (i.e., `a / b`).
+            """
+            if b != 0:
+                return a / b
+
+        @tool
         def convert_period_to_year(period: str) -> str:
             """
             Convert a period string in the format 'YYYY.MM' to a 4-digit year string.
@@ -612,7 +687,7 @@ def main():
             allow_delegation=True,
             tools=[retriever],
             llm=llm,
-            max_iter=5,
+            max_iter=3,
             function_calling_llm=function_calling_llm,
         )
 
@@ -626,7 +701,7 @@ def main():
             llm=llm,
             function_calling_llm=function_calling_llm,
             tools=[difference],
-            max_iter=5,
+            max_iter=3,
             memory=True,
         )
 
@@ -656,7 +731,7 @@ def main():
             description="Analyze data to calculate the following information: annual minimum, maximum, sum grouped by country, indicator and year. You should never recreate the dataframe given as an input.",
             agent=DataCore,
             expected_output="Annual report of the performance by indicator and by country that appear in the dataframe input. You should never make up new indicators or new countries that does not appear in the dataframe",
-            output_file="data_task.md",
+            output_file="tasks_outputs/data_task.md",
         )
 
         # data_task = Task(
@@ -670,7 +745,7 @@ def main():
                 """Analyze internal documents to extract strategic objectives for the country-indicator pairs defined in the context.
                 You must restrict your analysis to only those pairs that can be formed from the provided
                 list of countries and list of indicators within the context.
-                Do not address or mention any other countries or indicators outside this scope."""
+                You should never address or mention any other countries or indicators outside the scope of the context."""
             ),
             agent=DocuMentor,
             expected_output=(
@@ -681,7 +756,7 @@ def main():
                 Only report targets if their country and indicator are exactly the same as in the context."""
             ),
             context=[data_task],
-            output_file="doc_task.md",
+            output_file="tasks_outputs/doc_task.md",
         )
 
         gap_task = Task(
@@ -696,15 +771,22 @@ def main():
                 - Criticality Score: [1-5 rating]
             """,
             context=[data_task, doc_task],
-            output_file="gap_analysis.md",
+            tools=[division],
+            output_file="tasks_outputs/gap_analysis.md",
         )
 
         insight_task = Task(
-            description="Report of the actions to take to reduce the identified gaps",
+            description="""Generate a report of actionable recommendations to reduce the identified gaps. 
+                        The recommendations must ensure that the **total percent gap identified** is applied uniformly to **every single month's values**. 
+                        Each action should align with the total percent gap and reflect the same reduction percentage across all months for a given country.""",
             agent=InsightSynthesizer,
-            expected_output=f"List of recommended actions to reduce solely the identified gaps in the CONTEXT. You should distribute the percent change throughout the year so that the yearly average percent change equals the percent gap identified.",
+            expected_output=f"""**Structured Output:**
+                            1. A list of recommended actions to reduce the identified gaps in logistics costs.
+                            2. Each action must specify how the **total percent gap** will be applied uniformly to every month's values.
+                            3. Actions should be specific, measurable, and tied directly to the total percent gap identified in the context.
+                            4. Ensure the same percentage reduction is applied to every month for a given country, reflecting the total gap uniformly across all the months of the year.""",
             context=[gap_task],
-            output_file="insight_task.md",
+            output_file="tasks_outputs/insight_task.md",
         )
 
         strategy_task = Task(
@@ -712,7 +794,7 @@ def main():
             agent=StrategyNavigator,
             expected_output="A prioritized action plan aligning insights with internal business goals, focusing on the identified gaps",
             context=[insight_task],
-            output_file="strategy_task.md",
+            output_file="tasks_outputs/strategy_task.md",
         )
 
         # Crew Assembly

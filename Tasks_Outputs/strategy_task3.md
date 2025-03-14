@@ -8,13 +8,13 @@ The strategic annual plan aims to address the identified gaps in logistics costs
 **Belgium:**
 
 1. **Action 1: Reduce commercial costs by 44.7% uniformly across all months**
-	* Monthly reduction: €252.2k (€3,026.6k / 12 months)
-	* New monthly target: €561.1k (€6,773.4k / 12 months - €252.2k)
+	* Monthly reduction: â‚¬252.2k (â‚¬3,026.6k / 12 months)
+	* New monthly target: â‚¬561.1k (â‚¬6,773.4k / 12 months - â‚¬252.2k)
 	* Implementation timeline: Month 1-12
 	* Responsible team: Logistics and Procurement
 	* Key performance indicators (KPIs):
 		+ Monthly commercial costs reduction
-		+ Yearly commercial costs reduction (target: €3,026.6k)
+		+ Yearly commercial costs reduction (target: â‚¬3,026.6k)
 2. **Monitoring and Evaluation:**
 	* Regular review of monthly commercial costs
 	* Quarterly review of progress toward the yearly target
@@ -23,13 +23,13 @@ The strategic annual plan aims to address the identified gaps in logistics costs
 **Sweden:**
 
 1. **Action 1: Reduce commercial costs by 31.1% uniformly across all months**
-	* Monthly reduction: €236.9k (€2,844.8k / 12 months)
-	* New monthly target: €763.0k (€9,155.2k / 12 months - €236.9k)
+	* Monthly reduction: â‚¬236.9k (â‚¬2,844.8k / 12 months)
+	* New monthly target: â‚¬763.0k (â‚¬9,155.2k / 12 months - â‚¬236.9k)
 	* Implementation timeline: Month 1-12
 	* Responsible team: Logistics and Procurement
 	* KPIs:
 		+ Monthly commercial costs reduction
-		+ Yearly commercial costs reduction (target: €2,844.8k)
+		+ Yearly commercial costs reduction (target: â‚¬2,844.8k)
 2. **Monitoring and Evaluation:**
 	* Regular review of monthly commercial costs
 	* Quarterly review of progress toward the yearly target
@@ -48,8 +48,8 @@ The strategic annual plan aims to address the identified gaps in logistics costs
 
 **Budget Allocation:**
 
-* Belgium: €3,026.6k (yearly reduction target)
-* Sweden: €2,844.8k (yearly reduction target)
+* Belgium: â‚¬3,026.6k (yearly reduction target)
+* Sweden: â‚¬2,844.8k (yearly reduction target)
 * Portugal: No additional budget required
 
 **Timeline:**

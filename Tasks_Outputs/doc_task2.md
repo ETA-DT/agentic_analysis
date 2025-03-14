@@ -8,7 +8,7 @@
 **Finland:**
 - Commercial Costs: Not explicitly stated.
 - General Costs: Not explicitly stated.
-- Logistics Costs: Target 2025: €8,500k via AI-driven route optimization.
+- Logistics Costs: Goal 2025: €8,500k via AI-driven route optimization.
 - Marketing Costs: Not explicitly stated.
 - Storage Costs: Not explicitly stated.
 
