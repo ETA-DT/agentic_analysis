@@ -218,7 +218,7 @@ rag_model_id = "mistralai/mistral-large"
 
 rag_model_parameters = {
     "decoding_method": "greedy",
-    "max_new_tokens": 5000,
+    "max_new_tokens": 3000,
     "min_new_tokens": 1,
     "repetition_penalty": 1,
 }
@@ -497,7 +497,7 @@ def main():
                 """
                 docs, scores = zip(
                     *docsearch.similarity_search_with_relevance_scores(
-                        query, score_threshold=0.3, k=6
+                        query, score_threshold=0.5, k=4
                     )
                 )
                 for doc, score in zip(docs, scores):
@@ -512,7 +512,9 @@ def main():
                 )  # remove duplicates documents
                 retrieved_context = "\n".join(unique_retrieval)
 
-                rag_prompt_input = f"Based on the retrieved INFORMATION, {query} ? INFORMATION: {retrieved_context}"
+                rag_prompt_input = f"""Based on the retrieved CHUNKS, answer to the QUESTION.
+                                    QUESTION: {query} ?
+                                    CHUNKS: {retrieved_context}"""
                 rag_response = rag_model.generate_text(
                     prompt=rag_prompt_input, guardrails=False
                 )
@@ -522,31 +524,27 @@ def main():
         else:
 
             @tool
-            def retriever(query=user_question) -> List[LCDocument]:
+            def retriever(query=user_question) -> str:
                 """
                 Retrieve relevant contextual documents and generate an answer to the given query.
 
-                This tool performs a semantic similarity search over a document index to retrieve
-                the top-k most relevant documents for a given natural language query. and
-                creates a clean context paragraph. This context is then used by
+                This tool performs a semantic similarity search over documents that is used by
                 a Retrieval-Augmented Generation (RAG) model to generate a response.
 
                 Parameters:
                     query (str): A natural language question or prompt requiring contextual information.
 
                 Returns:
-                    List[LCDocument]: A list containing a single LCDocument where `page_content` is the
-                    generated response from the RAG model, and `metadata` includes the relevance scores
-                    of the underlying documents used for context.
+                    Returns the RAG response to the input query.
 
                 Usage:
-                    Use this tool when a question requires factual or context-based information retrieved
-                    from a knowledge base. The tool both retrieves relevant supporting context and answers
+                    Use this tool with a very explicit query to retrieve factual or context-based information
+                    from documents. This tool both retrieves relevant supporting context and answers
                     the query based on that information.
                 """
                 docs, scores = zip(
                     *docsearch.similarity_search_with_relevance_scores(
-                        query, score_threshold=0.3, k=6
+                        query, score_threshold=0.5, k=4
                     )
                 )
                 for doc, score in zip(docs, scores):
@@ -678,11 +676,22 @@ def main():
             function_calling_llm=function_calling_llm,
         )
 
+        entity_identifier = Agent(
+            role="Entity Extractor",
+            backstory="A Entity Extractor expert skilled in extracting the required entities.",
+            goal="Retrieve country-indicator pairs that could only be formed from the indicators and countries mentionned in the context.",
+            verbose=True,
+            allow_delegation=True,
+            llm=llm,
+            max_iter=2,
+            function_calling_llm=function_calling_llm,
+        )
+
         ## DocuMentor Analyst
         DocuMentor = Agent(
             role="Document Analyst",
-            backstory="An NLP expert skilled in extracting insights from internal business documents.",
-            goal="Retrieve strategic targets from internal documents regarding only the indicator-country pairs that could be formed from the indicators and countries mentionned in the context.",
+            backstory="A Document Analyst expert skilled in extracting insights from internal business documents.",
+            goal="Retrieve targets from internal documents regarding only the country-indicator pairs that could only be formed from the indicators and countries mentionned in the context.",
             verbose=True,
             allow_delegation=True,
             tools=[retriever],
@@ -709,8 +718,9 @@ def main():
         InsightSynthesizer = Agent(
             role="Insight Synthesizer",
             backstory="A strategist blending AI-driven analytics with business insights.",
-            goal="List recommandation actions to tackle solely the identified gaps",
+            goal="List of percent gaps to reduce and recommandation actions to tackle these identified gaps, and the objective value to achieve for each country-indicator pair",
             verbose=True,
+            max_iter=2,
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
@@ -722,6 +732,7 @@ def main():
             goal="Ensure actions directly address indicators blocking strategic goals and prioritize them.",
             # tools=[ai_tool],
             verbose=True,
+            max_iter=2,
             llm=llm,
             function_calling_llm=function_calling_llm,
         )
@@ -734,33 +745,33 @@ def main():
             output_file="tasks_outputs/data_task.md",
         )
 
-        # data_task = Task(
-        #     description="Extract simple business insights, identify key strengths and weaknesses, and determine the most critical intersections for prioritization.",
-        #     agent=DataCore,
-        #     expected_output="A structured report with key trends highlighted, including priority intersections and identified strengths and weaknesses to focus on.",
-        # )
+        identify_task = Task(
+            description="Extract the country-indicator pairs mentionned in the context",
+            agent=entity_identifier,
+            expected_output="A structured list of country-indicator pairs that could only be formed by the set of countries and indicators in the context.",
+            context=[data_task],
+        )
 
         doc_task = Task(
             description=(
-                """Analyze internal documents to extract strategic objectives for the country-indicator pairs defined in the context.
-                You must restrict your analysis to only those pairs that can be formed from the provided
-                list of countries and list of indicators within the context.
-                You should never address or mention any other countries or indicators outside the scope of the context."""
+                "Analyze internal documents to find targets for the exact country-indicator pairs listed in the context. "
+                "Only consider pairs where both the country and the indicator exactly match the names provided in the context. "
+                "Do not include or mention any other countries or indicators. "
+                "Do not guess, infer, or link similar indicators — matches must be exact."
             ),
             agent=DocuMentor,
             expected_output=(
-                """A list of the country-indicator pairs (from the context) and their corresponding target values
-                as explicitly stated in internal documents.
-                You should not make assumptions or fabricate targets.
-                You should not infer or combine targets across different indicators.
-                Only report targets if their country and indicator are exactly the same as in the context."""
+                "A list of targets for each country-indicator pair from the context "
+                "only if the exact pair is clearly stated in the internal documents. "
+                "Do not make up targets, and do not mix indicators. "
+                "Only include targets for exact country and indicator matches."
             ),
-            context=[data_task],
+            context=[identify_task],
             output_file="tasks_outputs/doc_task.md",
         )
 
         gap_task = Task(
-            description=f"For each indicator stated in the Context, calculate the gap between its target annual value and the annual current value. If an indicator does not have an attached target value, skip its gap calculation.",
+            description=f"For each country-indicator pair stated in the Context, calculate the gap between its target annual value and the annual current value. If an country-indicator pair does not have an attached target value, skip its gap calculation.",
             agent=GapAnalyst,
             expected_output="""
                 Gap Analysis Report:
@@ -770,21 +781,20 @@ def main():
                 - Percent Gap: [Quantitative difference ratio (Gap Size / Current)]
                 - Criticality Score: [1-5 rating]
             """,
-            context=[data_task, doc_task],
+            context=[identify_task, data_task, doc_task],
             tools=[division],
             output_file="tasks_outputs/gap_analysis.md",
         )
 
         insight_task = Task(
-            description="""Generate a report of actionable recommendations to reduce the identified gaps. 
-                        The recommendations must ensure that the **total percent gap identified** is applied uniformly to **every single month's values**. 
+            description="""Generate a report of actionable recommendations to reduce the identified percent gaps. 
+                        The recommendations must ensure that the **total percent gap identified** is applied on **every single month's values**. 
                         Each action should align with the total percent gap and reflect the same reduction percentage across all months for a given country.""",
             agent=InsightSynthesizer,
             expected_output=f"""**Structured Output:**
-                            1. A list of recommended actions to reduce the identified gaps in logistics costs.
-                            2. Each action must specify how the **total percent gap** will be applied uniformly to every month's values.
-                            3. Actions should be specific, measurable, and tied directly to the total percent gap identified in the context.
-                            4. Ensure the same percentage reduction is applied to every month for a given country, reflecting the total gap uniformly across all the months of the year.""",
+                            1. A list of recommended actions to reduce the identified gaps with the target value to achieve for each country-indicator pair.
+                            2. Actions should be specific, measurable, and tied directly to the total percent gap identified in the context.
+                            3. Ensure the same percentage reduction is applied to every month for a given country, reflecting the total percent gap uniformly across all the months of the year.""",
             context=[gap_task],
             output_file="tasks_outputs/insight_task.md",
         )
@@ -801,6 +811,7 @@ def main():
         crew = Crew(
             agents=[
                 DataCore,
+                entity_identifier,
                 DocuMentor,
                 GapAnalyst,
                 InsightSynthesizer,
@@ -809,6 +820,7 @@ def main():
             ],
             tasks=[
                 data_task,
+                identify_task,
                 doc_task,
                 gap_task,
                 insight_task,
@@ -825,9 +837,6 @@ def main():
 
     crew = create_crewai_setup(cube_name, view_name)
     crew_result = crew.kickoff()
-
-    with open("crew_result.txt", "w") as file:
-        file.write(str(crew_result))
 
     tm1.cells.write_value(
         crew_result,
@@ -1043,16 +1052,16 @@ def main():
         print(pourcentages_trouves)
 
         print("SUBSET PAYS TROUVES AVANT UPDATE")
-        print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraits"))
+        print(tm1.subsets.get_element_names("Pays", "Pays", "Pays_Subset"))
 
         print("SUBSET PAYS CARTE TROUVES AVANT UPDATE")
         print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraitsPourCarte"))
 
-        update_subset("PaysExtraits", "Pays", "Pays", pays_trouves)
+        update_subset("Pays_Subset", "Pays", "Pays", pays_trouves)
         update_subset("PaysExtraitsPourCarte", "Pays", "Pays", pays_trouves)
 
         print("SUBSET PAYS TROUVES APRES UPDATE")
-        print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraits"))
+        print(tm1.subsets.get_element_names("Pays", "Pays", "Pays_Subset"))
 
         print("SUBSET PAYS CARTE TROUVES APRES UPDATE")
         print(tm1.subsets.get_element_names("Pays", "Pays", "PaysExtraitsPourCarte"))
@@ -1116,15 +1125,16 @@ def main():
                 if "month" in target.keys():
                     mois = target["month"]
                     if str(mois).lower() in all_months.keys():
-                        tm1.cells.write_value(
-                            new_value,
+                        tm1.cells.write(
                             cube_name=cube_name,
-                            element_tuple=[
-                                "BUDG_VC_AJUST%",
-                                year + "." + all_months[str(mois).lower()],
-                                target_country,
-                                target_indicator,
-                            ],
+                            cellset_as_dict={
+                                (
+                                    "BUDG_VC_AJUST%",
+                                    year + "." + all_months[str(mois).lower()],
+                                    target_country,
+                                    target_indicator,
+                                ): new_value,
+                            },
                         )
                     # print(percent, mois, target_country, target_indicator)
                 else:
@@ -1146,7 +1156,7 @@ def main():
                                     target_indicator,
                                 ): new_value
                             },
-                            precision=5,
+                            precision=4,
                         )
                     # print(percent, period, target_country, target_indicator)
 

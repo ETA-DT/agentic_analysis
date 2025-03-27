@@ -1,22 +1,8 @@
-Based on the provided context, the following country-indicator pairs and their corresponding target values were found in the internal documents:
+Unfortunately, the retriever tool did not provide the required information for the exact country-indicator pairs listed in the context. The provided observations included information for different countries and indicators, but not the exact pairs specified.
 
-- Belgium Commercial Costs: €9,800k (target for spare parts sales)
-- Belgium General Costs: €8,400k (target for general costs)
-- No explicit target values were found for Belgium Logistics Costs, Belgium Marketing Costs, and Belgium Storage Costs.
-- Finland Commercial Costs: No explicit target value found
-- Finland General Costs: No explicit target value found
-- Finland Logistics Costs: No explicit target value found
-- Finland Marketing Costs: No explicit target value found
-- Finland Storage Costs: No explicit target value found
-- Portugal Commercial Costs: €53,000k (target for commercial contractual commitments)
-- Portugal General Costs: No explicit target value found
-- Portugal Logistics Costs: €8,000k (target for logistics costs)
-- Portugal Marketing Costs: No explicit target value found
-- Portugal Storage Costs: No explicit target value found
-- Sweden Commercial Costs: €60,000k (target for commercial contractual commitments)
-- Sweden General Costs: No explicit target value found
-- Sweden Logistics Costs: No explicit target value found
-- Sweden Marketing Costs: €8,500k (target for marketing campaign budgets)
-- Sweden Storage Costs: No explicit target value found
+However, based on the context and the observations, I can provide the following information:
 
-Please note that some country-indicator pairs did not have explicit target values mentioned in the internal documents.
+* No targets were found for the exact country-indicator pairs listed in the context.
+* The observations included information for different countries and indicators, but not the exact pairs specified.
+
+I apologize for not being able to provide a more accurate answer. If more information or context is available, I may be able to provide a better response.

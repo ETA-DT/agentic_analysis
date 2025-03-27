@@ -1,43 +1,129 @@
 Gap Analysis Report:
 
-- Country: Belgium
-  - Indicator: Commercial Costs
-    - Target: €9,800k
-    - Current Performance: €6,773.4k
-    - Gap Size: €3,026.6k
-    - Percent Gap: 44.7%
-    - Criticality Score: 3
-  - Indicator: General Costs
-    - Target: €8,400k
-    - Current Performance: €9,072.6k
-    - Gap Size: -€672.6k
-    - Percent Gap: -7.4%
-    - Criticality Score: 2
+Belgium:
+- Commercial Costs: 
+  - Target: 7000.0
+  - Current Performance: 6773.4
+  - Gap Size: 226.6
+  - Percent Gap: 3.35%
+  - Criticality Score: 2
+- General Costs: 
+  - Target: 9000.0
+  - Current Performance: 9072.6
+  - Gap Size: -72.6
+  - Percent Gap: -0.80%
+  - Criticality Score: 1
+- Logistics Costs: 
+  - Target: 8500.0
+  - Current Performance: 8893.2
+  - Gap Size: -393.2
+  - Percent Gap: -4.42%
+  - Criticality Score: 3
+- Marketing Costs: 
+  - Target: 11000.0
+  - Current Performance: 11652.0
+  - Gap Size: -652.0
+  - Percent Gap: -5.60%
+  - Criticality Score: 4
+- Storage Costs: 
+  - Target: 8000.0
+  - Current Performance: 8703.0
+  - Gap Size: -703.0
+  - Percent Gap: -8.08%
+  - Criticality Score: 5
 
-- Country: Portugal
-  - Indicator: Commercial Costs
-    - Target: €53,000k
-    - Current Performance: €6,842.2k
-    - Gap Size: €46,157.8k
-    - Percent Gap: 675.1%
-    - Criticality Score: 5
-  - Indicator: Logistics Costs
-    - Target: €8,000k
-    - Current Performance: €8,975k
-    - Gap Size: -€975k
-    - Percent Gap: -10.9%
-    - Criticality Score: 2
+Finland:
+- Commercial Costs: 
+  - Target: 9000.0
+  - Current Performance: 9253.2
+  - Gap Size: -253.2
+  - Percent Gap: -2.74%
+  - Criticality Score: 2
+- General Costs: 
+  - Target: 8000.0
+  - Current Performance: 8050.6
+  - Gap Size: -50.6
+  - Percent Gap: -0.63%
+  - Criticality Score: 1
+- Logistics Costs: 
+  - Target: 9000.0
+  - Current Performance: 9318.2
+  - Gap Size: -318.2
+  - Percent Gap: -3.53%
+  - Criticality Score: 3
+- Marketing Costs: 
+  - Target: 9000.0
+  - Current Performance: 9295.8
+  - Gap Size: -295.8
+  - Percent Gap: -3.18%
+  - Criticality Score: 2
+- Storage Costs: 
+  - Target: 6000.0
+  - Current Performance: 6350.2
+  - Gap Size: -350.2
+  - Percent Gap: -5.50%
+  - Criticality Score: 4
 
-- Country: Sweden
-  - Indicator: Commercial Costs
-    - Target: €60,000k
-    - Current Performance: €9,155.2k
-    - Gap Size: €50,844.8k
-    - Percent Gap: 555.1%
-    - Criticality Score: 5
-  - Indicator: Marketing Costs
-    - Target: €8,500k
-    - Current Performance: €9,273.2k
-    - Gap Size: -€773.2k
-    - Percent Gap: -8.3%
-    - Criticality Score: 2
+Portugal:
+- Commercial Costs: 
+  - Target: 6500.0
+  - Current Performance: 6842.2
+  - Gap Size: -342.2
+  - Percent Gap: -5.00%
+  - Criticality Score: 4
+- General Costs: 
+  - Target: 9000.0
+  - Current Performance: 9151.0
+  - Gap Size: -151.0
+  - Percent Gap: -1.66%
+  - Criticality Score: 2
+- Logistics Costs: 
+  - Target: 8500.0
+  - Current Performance: 8975.0
+  - Gap Size: -475.0
+  - Percent Gap: -5.29%
+  - Criticality Score: 4
+- Marketing Costs: 
+  - Target: 11000.0
+  - Current Performance: 11722.6
+  - Gap Size: -722.6
+  - Percent Gap: -6.20%
+  - Criticality Score: 5
+- Storage Costs: 
+  - Target: 8000.0
+  - Current Performance: 8776.8
+  - Gap Size: -776.8
+  - Percent Gap: -9.71%
+  - Criticality Score: 5
+
+Sweden:
+- Commercial Costs: 
+  - Target: 9000.0
+  - Current Performance: 9155.2
+  - Gap Size: -155.2
+  - Percent Gap: -1.70%
+  - Criticality Score: 2
+- General Costs: 
+  - Target: 8000.0
+  - Current Performance: 7931.8
+  - Gap Size: 68.2
+  - Percent Gap: 0.86%
+  - Criticality Score: 1
+- Logistics Costs: 
+  - Target: 9000.0
+  - Current Performance: 9138.2
+  - Gap Size: -138.2
+  - Percent Gap: -1.53%
+  - Criticality Score: 2
+- Marketing Costs: 
+  - Target: 9000.0
+  - Current Performance: 9273.2
+  - Gap Size: -273.2
+  - Percent Gap: -3.04%
+  - Criticality Score: 2
+- Storage Costs: 
+  - Target: 6000.0
+  - Current Performance: 6289.8
+  - Gap Size: -289.8
+  - Percent Gap: -4.83%
+  - Criticality Score: 3
